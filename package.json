@@ -1,0 +1,27 @@
+{
+  "name": "telegrambot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "nodemon --exec tsx src/index.js",
+    "build": "tsc",
+    "start:prod": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@grammyjs/conversations": "^2.1.0",
+    "axios": "^1.11.0",
+    "dotenv": "^17.0.1",
+    "grammy": "^1.37.0",
+    "nodemon": "^3.1.10",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.3",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
