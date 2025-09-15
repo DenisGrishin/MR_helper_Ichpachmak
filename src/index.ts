@@ -13,6 +13,11 @@ import { CommandDispatcher } from './CommandDispatcher';
 import { IUser } from './db/db';
 import { handleCommand, commandAllUser, commandShowPreset } from './command';
 import { KeyListCommand, listMyCommand } from './command/constant';
+import {
+  handlerAssigneesReviewersMR,
+  handlerPresetMR,
+  handlerActiveMR,
+} from './handler';
 // TODO убрать в отдельный файл типы
 interface SessionData {
   lastCommand?: KeyListCommand | null;
@@ -59,9 +64,17 @@ bot.command([KeyListCommand.setIdGitLab], async (ctx: MyContext) =>
 
 bot.command([KeyListCommand.showPreset], commandShowPreset);
 
+// git.russpass.dev gitlab.com — дергаем всех кто isActive
+bot.hears(/!!https:\/\/gitlab.com/, handlerActiveMR);
+
+// дергаем тех кого добавили в гит idAssignees idReviewers
+bot.hears(/~https:\/\/gitlab.com/, handlerAssigneesReviewersMR);
+
+// дергаем по пресету
+bot.hears(/!https:\/\/gitlab.com/, handlerPresetMR);
+
 // обработка сообщений после команд
 bot.on('message', async (ctx: MyContext) => {
-  console.log('ctx.session.lastCommand ==> ', ctx.session.lastCommand);
   if (!ctx.session.lastCommand) return;
 
   const msg = ctx.message!.text!;
@@ -89,151 +102,6 @@ bot.on('message', async (ctx: MyContext) => {
       break;
   }
   ctx.session.lastCommand = null;
-});
-
-// git.russpass.dev gitlab.com — дергаем всех кто isActive
-bot.hears(/!!https:\/\/gitlab.com/, async (ctx: Context) => {
-  try {
-    const users: IUser[] = await getAllUsers();
-    const text = ctx.message!.text!;
-    const regexMRId = /merge_requests\/(\d+)/;
-    const regexBranchId = /\bRUSSPASS-\d+\b/i;
-    const idMR = text.match(regexMRId)![1];
-
-    const formattedUsers = users
-      .map((u) => (u.isActive ? `${u.name} ` : undefined))
-      .filter((el): el is string => el !== undefined)
-      .join('');
-
-    const MR = await ApiGitLab.getMR(idMR);
-    if (!MR) return;
-
-    const nameBranch = MR.source_branch;
-    const taskNumber = nameBranch.match(regexBranchId)![0];
-
-    await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
-
-    const msg = `МР от ${MR.author.name} @${ctx.message!.from!.username} 
-
-${ctx.message!.text}
-
-Задача:
-https://itpm.mos.ru/browse/${taskNumber}
-
-Описание: ${MR.description} 
-
-${formattedUsers}    
-    `;
-    // @ts-ignore
-    await ctx.reply(msg, { disable_web_page_preview: true });
-  } catch (err) {
-    console.error('❌ Не удалось удалить сообщение:', err);
-  }
-});
-
-// дергаем тех кого добавили в гит idAssignees idReviewers
-bot.hears(/~https:\/\/gitlab.com/, async (ctx: Context) => {
-  try {
-    const text = ctx.message!.text!;
-    const regexMRId = /merge_requests\/(\d+)/;
-    const regexBranchId = /\bRUSSPASS-\d+\b/i;
-    const idMR = text.match(regexMRId)![1];
-
-    const MR = await ApiGitLab.getMR(idMR);
-    if (!MR) return;
-
-    const idAssignees = MR.assignees[0]?.id ?? 0;
-    const idReviewers = MR.reviewers[0]?.id ?? 0;
-    const users: IUser[] = await findUsersByIdGitlab([
-      idAssignees,
-      idReviewers,
-    ]);
-
-    const formattedUsers = users.map((u) => u.name).join('');
-
-    if (!formattedUsers.length) {
-      await ctx.reply(
-        `В базе нет id этих пачанов, Assignees - ${MR.assignees[0].name}, Reviewers - ${MR.reviewers[0].name} `,
-        // @ts-ignore
-        { disable_web_page_preview: true }
-      );
-      return;
-    }
-
-    const nameBranch = MR.source_branch;
-    const taskNumber = nameBranch.match(regexBranchId)![0];
-
-    await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
-
-    const isError = !idAssignees || !idReviewers;
-
-    const msgSuccessText = (t: string) => `✅  ${t} был добавлен в Git Lab`;
-    const msgWarningText = (t: string) => `⚠️  ${t} не был добавлен в Git Lab`;
-
-    const errorMsg = `
-      ${
-        !idAssignees ? msgWarningText('Assignees') : msgSuccessText('Assignees')
-      }
-      ${
-        !idReviewers ? msgWarningText('Reviewers') : msgSuccessText('Reviewers')
-      }
-      ${formattedUsers.length ? '' : 'Пользовтель не найдет с таким id Git lab'}
-      `;
-
-    const successMsg = `МР от ${MR.author.name} @${ctx.message!.from!.username}
-
-${ctx.message!.text}
-
-Задача:
-https://itpm.mos.ru/browse/${taskNumber}
-
-Описание: ${MR.description} 
-
-${formattedUsers}
-    `;
-
-    await ctx.reply(isError ? errorMsg : successMsg, {
-      // @ts-ignore
-      disable_web_page_preview: true,
-    });
-  } catch (err) {
-    console.error('❌ Не удалось удалить сообщение:', err);
-  }
-});
-
-// дергаем по пресету
-bot.hears(/!https:\/\/gitlab.com/, async (ctx: Context) => {
-  try {
-    const authorMsg = await findUser(`@${ctx.message!.from!.username}`);
-    const text = ctx.message!.text!;
-    const regexMRId = /merge_requests\/(\d+)/;
-    const regexBranchId = /\bRUSSPASS-\d+\b/i;
-    const idMR = text.match(regexMRId)![1];
-
-    const MR = await ApiGitLab.getMR(idMR);
-    if (!MR) return;
-
-    const nameBranch = MR.source_branch;
-    const taskNumber = nameBranch.match(regexBranchId)![0];
-
-    await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
-
-    const successMsg = `МР от ${MR.author.name} @${ctx.message!.from!.username}
-
-${ctx.message!.text}
-
-Задача:
-https://itpm.mos.ru/browse/${taskNumber}
-
-Описание: ${MR.description} 
-
-${JSON.parse(authorMsg?.preset || '[]').join(', ')}
-    `;
-    // @ts-ignore
-    await ctx.reply(successMsg, { disable_web_page_preview: true });
-  } catch (err) {
-    console.error('❌ Не удалось удалить сообщение:', err);
-  }
 });
 
 // Обработка ошибок согласно документации

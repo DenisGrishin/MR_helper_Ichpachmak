@@ -1,0 +1,81 @@
+import { MyContext } from '..';
+import { ApiGitLab } from '../api/apiGitLab';
+import { IUser } from '../db/db';
+import { findUsersByIdGitlab } from '../db/helpers';
+import { regexBranchId, regexMRId } from './constant';
+
+export const handlerAssigneesReviewersMR = async (ctx: MyContext) => {
+  try {
+    const text = ctx.message!.text!;
+
+    const idMR = text.match(regexMRId)![1];
+
+    const MR = await ApiGitLab.getMR(idMR);
+    if (!MR) return;
+
+    const idAssignees = MR.assignees[0]?.id ?? 0;
+    const idReviewers = MR.reviewers[0]?.id ?? 0;
+    const users: IUser[] = await findUsersByIdGitlab([
+      idAssignees,
+      idReviewers,
+    ]);
+
+    const formattedUsers = users.map((u) => u.name).join('');
+
+    if (!formattedUsers.length) {
+      await ctx.reply(
+        `В базе нет id этих пачанов, Assignees - ${MR.assignees[0].name}, Reviewers - ${MR.reviewers[0].name} `,
+        // @ts-ignore
+        { disable_web_page_preview: true }
+      );
+      return;
+    }
+
+    const nameBranch = MR.source_branch;
+    const taskNumber = nameBranch.match(regexBranchId)![0];
+
+    await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
+
+    const isError = !idAssignees || !idReviewers;
+
+    const msgSuccessText = (t: string) => `✅  ${t} был добавлен в Git Lab`;
+    const msgWarningText = (t: string) => `⚠️  ${t} не был добавлен в Git Lab`;
+
+    const linkMR = ctx.message!.text?.slice(1);
+    const title = MR.title ? `Заголовок: ${MR.title.slice(0, 50)}` : '';
+    const description = MR.description
+      ? `Описание: ${MR.description.slice(0, 300)}`
+      : '';
+
+    const errorMsg = `
+      ${
+        !idAssignees ? msgWarningText('Assignees') : msgSuccessText('Assignees')
+      }
+      ${
+        !idReviewers ? msgWarningText('Reviewers') : msgSuccessText('Reviewers')
+      }
+      ${formattedUsers.length ? '' : 'Пользовтель не найдет с таким id Git lab'}
+      `;
+
+    const successMsg = `МР от ${MR.author.name} @${ctx.message!.from!.username}
+
+${linkMR}
+
+Задача:
+https://itpm.mos.ru/browse/${taskNumber}
+
+${title}
+
+${description} 
+
+${formattedUsers}
+    `;
+
+    await ctx.reply(isError ? errorMsg : successMsg, {
+      // @ts-ignore
+      disable_web_page_preview: true,
+    });
+  } catch (err) {
+    console.error('❌ Не удалось удалить сообщение:', err);
+  }
+};
