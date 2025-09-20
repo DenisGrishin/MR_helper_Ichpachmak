@@ -9,13 +9,27 @@ export function getAllUsers(): Promise<IUser[]> {
   });
 }
 
-function getFindUsers(name: string): Promise<IUser | undefined> {
-  return new Promise((resolve, reject) => {
-    User.find(name, (err, user) => {
-      if (err) return reject(err);
-      resolve(user);
-    });
-  });
+export function findUser(
+  slug: number | string,
+  key: 'id' | 'name'
+): Promise<IUser | undefined> {
+  switch (key) {
+    case 'id':
+      return new Promise((resolve, reject) => {
+        User.findById(slug as number, (err, user) => {
+          if (err) return reject(err);
+          resolve(user);
+        });
+      });
+
+    case 'name':
+      return new Promise((resolve, reject) => {
+        User.findByName(slug as string, (err, user) => {
+          if (err) return reject(err);
+          resolve(user);
+        });
+      });
+  }
 }
 
 export async function findUsersBd(users?: string[]): Promise<{
@@ -28,7 +42,7 @@ export async function findUsersBd(users?: string[]): Promise<{
 
   if (users) {
     for (const name of users) {
-      const user = await getFindUsers(name);
+      const user = await findUser(name, 'name');
 
       if (!user) notFindUsersDb.push(name);
       if (user) findUsersDb.push(user);
@@ -49,8 +63,4 @@ export function findUsersByIdGitlab(idGitLab: number[]): Promise<IUser[]> {
       resolve(users || []);
     });
   });
-}
-
-export async function findUser(name: string): Promise<IUser | undefined> {
-  return await getFindUsers(name);
 }

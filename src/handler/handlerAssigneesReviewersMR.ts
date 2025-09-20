@@ -1,14 +1,14 @@
-import { MyContext } from '..';
 import { ApiGitLab } from '../api/apiGitLab';
 import { IUser } from '../db/db';
 import { findUsersByIdGitlab } from '../db/helpers';
-import { regexBranchId, regexMRId } from './constant';
+import { MyContext } from '../type';
+import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
 export const handlerAssigneesReviewersMR = async (ctx: MyContext) => {
   try {
     const text = ctx.message!.text!;
 
-    const idMR = text.match(regexMRId)![1];
+    const idMR = text.match(REGEX_MR_ID)![1];
 
     const MR = await ApiGitLab.getMR(idMR);
     if (!MR) return;
@@ -32,7 +32,7 @@ export const handlerAssigneesReviewersMR = async (ctx: MyContext) => {
     }
 
     const nameBranch = MR.source_branch;
-    const taskNumber = nameBranch.match(regexBranchId)![0];
+    const taskNumber = nameBranch.match(REGEX_BRANCH_ID)![0];
 
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 

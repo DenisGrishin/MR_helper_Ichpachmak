@@ -1,8 +1,10 @@
 import { Context } from 'grammy';
 import { getAllUsers } from '../db/helpers';
 import { IUser } from '../db/db';
+import { TCallbackQueryContext } from '../type';
 
-export const commandAllUser = async (ctx: Context) => {
+export const commandAllUser = async (ctx: TCallbackQueryContext) => {
+  ctx.answerCallbackQuery();
   const users: IUser[] = await getAllUsers();
   const listUser = users
     .map((user) => `${user.name} — ${user.isActive ? '✅' : '❌'}\n`)

@@ -1,18 +1,18 @@
 import { Context } from 'grammy';
 import { ApiGitLab } from '../api/apiGitLab';
 import { findUser } from '../db/helpers';
-import { regexBranchId, regexMRId } from './constant';
+import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
 export const handlerPresetMR = async (ctx: Context) => {
   try {
     const authorMsg = await findUser(`@${ctx.message!.from!.username}`);
 
     const text = ctx.message!.text!;
-    const idMR = text.match(regexMRId)![1];
+    const idMR = text.match(REGEX_MR_ID)![1];
     const MR = await ApiGitLab.getMR(idMR);
     if (!MR) return;
     const nameBranch = MR.source_branch;
-    const taskNumber = nameBranch.match(regexBranchId)![0];
+    const taskNumber = nameBranch.match(REGEX_BRANCH_ID)![0];
 
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 

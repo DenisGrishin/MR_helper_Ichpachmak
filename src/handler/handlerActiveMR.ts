@@ -1,8 +1,8 @@
-import { MyContext } from '..';
 import { ApiGitLab } from '../api/apiGitLab';
 import { IUser } from '../db/db';
 import { getAllUsers } from '../db/helpers';
-import { regexBranchId, regexMRId } from './constant';
+import { MyContext } from '../type';
+import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
 export const handlerActiveMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
@@ -15,11 +15,11 @@ export const handlerActiveMR = async (ctx: MyContext) => {
       .join('');
 
     const text = ctx.message!.text!;
-    const idMR = text.match(regexMRId)![1];
+    const idMR = text.match(REGEX_MR_ID)![1];
     const MR = await ApiGitLab.getMR(idMR);
     if (!MR) return;
     const nameBranch = MR.source_branch;
-    const taskNumber = nameBranch.match(regexBranchId)![0];
+    const taskNumber = nameBranch.match(REGEX_BRANCH_ID)![0];
 
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 

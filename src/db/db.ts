@@ -30,7 +30,14 @@ export class User {
     db.all('SELECT * FROM users', cb);
   }
 
-  static find(
+  static findById(
+    id: number,
+    cb: (err: Error | null, user?: IUser) => void
+  ): void {
+    db.get('SELECT * FROM users WHERE id = ?', [id], cb);
+  }
+
+  static findByName(
     name: string,
     cb: (err: Error | null, user?: IUser) => void
   ): void {
@@ -54,26 +61,21 @@ export class User {
     const sql = 'INSERT INTO users(name, idGitLab) VALUES (?, ?)';
     db.run(sql, [data.name, data.idGitLab], cb);
   }
-
+  // todo обновить чтоб работала только по id
   static update(
     id: number,
-    data: { name: string; isActive?: number | null; idGitLab?: number | null },
+    isActive: number | null,
     cb: (err: Error | null, res?: { updated: number }) => void
   ): void {
     if (!id) return cb(new Error('Please provide an id'));
 
     const sql = `
-      UPDATE users
-      SET name = ?, isActive = ?
-      WHERE id = ? AND idGitLab = ?
+    UPDATE users
+    SET isActive = ?
+    WHERE id = ?
     `;
 
-    const values = [
-      data.name,
-      data.isActive ?? null,
-      id,
-      data.idGitLab ?? null,
-    ];
+    const values = [isActive, id];
 
     db.run(sql, values, function (err) {
       if (err) return cb(err);
