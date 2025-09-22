@@ -4,6 +4,10 @@ import { getAllUsers } from '../db/helpers';
 import { MyContext } from '../type';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
+function removeNewLines(text: string): string {
+  return text.replace(/\n/g, '');
+}
+
 export const handlerActiveMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
   try {
@@ -26,7 +30,7 @@ export const handlerActiveMR = async (ctx: MyContext) => {
     const linkMR = ctx.message!.text?.slice(2);
     const title = MR.title ? `Заголовок: ${MR.title.slice(0, 50)}` : '';
     const description = MR.description
-      ? `Описание: ${MR.description.slice(0, 300)}`
+      ? `Описание: ${removeNewLines(MR.description.slice(0, 300))}`
       : '';
 
     const msg = `МР от ${MR.author.name} @${ctx.message!.from!.username} 

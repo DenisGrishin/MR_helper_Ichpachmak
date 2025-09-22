@@ -110,7 +110,7 @@ bot.callbackQuery(KeyListCommand.backToMenu, async (ctx) => {
 });
 
 //============================================================
-// команды
+// команды через /
 //============================================================
 
 bot.command([KeyListCommand.set], (ctx: MyContext) =>
@@ -139,7 +139,7 @@ bot.hears(/~https:\/\/gitlab.com/, handlerAssigneesReviewersMR);
 bot.hears(/!https:\/\/gitlab.com/, handlerPresetMR);
 
 //============================================================
-// обработка сообщений после команд
+// обработка сообщений после команд /
 //============================================================
 
 bot.on('message', async (ctx: MyContext) => {
