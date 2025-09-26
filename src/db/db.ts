@@ -30,18 +30,20 @@ export class User {
     db.all('SELECT * FROM users', cb);
   }
 
-  static findById(
-    id: number,
-    cb: (err: Error | null, user?: IUser) => void
+  static findUsers(
+    list: string[],
+    keySearch: 'id' | 'name',
+    cb: (err: Error | null, users?: IUser[]) => void
   ): void {
-    db.get('SELECT * FROM users WHERE id = ?', [id], cb);
-  }
+    if (list.length === 0) {
+      return cb(new Error('Вы не отправили теги'));
+    }
 
-  static findByName(
-    name: string,
-    cb: (err: Error | null, user?: IUser) => void
-  ): void {
-    db.get('SELECT * FROM users WHERE name = ?', [name], cb);
+    const placeholders = list.map(() => '?').join(', ');
+
+    const sql = `SELECT * FROM users WHERE ${keySearch} IN (${placeholders})`;
+
+    db.all(sql, list, cb);
   }
 
   static findByIdGitLabs(
@@ -55,11 +57,18 @@ export class User {
   }
 
   static create(
-    data: { name: string; idGitLab: number },
+    users: string[],
     cb: (err: Error | null, res?: unknown) => void
   ): void {
-    const sql = 'INSERT INTO users(name, idGitLab) VALUES (?, ?)';
-    db.run(sql, [data.name, data.idGitLab], cb);
+    if (users.length === 0) {
+      return cb(new Error('Вы не отправили теги'));
+    }
+
+    const placeholders = users.map(() => '(?)').join(', ');
+
+    const sql = `INSERT INTO users (name) VALUES ${placeholders}`;
+
+    db.run(sql, users, cb);
   }
   // todo обновить чтоб работала только по id
   static update(

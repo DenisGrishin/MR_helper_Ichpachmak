@@ -15,7 +15,7 @@ import {
   deletePreset,
   commandButtonPreset,
 } from './command';
-import { KeyListCommand, LIST_MY_COMMAND } from './command/constant';
+import { KeyCommand, LIST_MY_COMMAND } from './command/constant';
 import {
   handlerAssigneesReviewersMR,
   handlerPresetMR,
@@ -44,30 +44,30 @@ bot.api.setMyCommands(LIST_MY_COMMAND);
 // команды интерактивного меню
 //============================================================
 
-bot.callbackQuery(KeyListCommand.editStatusUser, commandEditStatusUser);
+bot.callbackQuery(KeyCommand.editStatusUser, commandEditStatusUser);
 
-bot.callbackQuery(KeyListCommand.delete, commandDeleteUser);
+bot.callbackQuery(KeyCommand.delete, commandDeleteUser);
 
-bot.callbackQuery(KeyListCommand.updatePreset, commandUpdatePreset);
+bot.callbackQuery(KeyCommand.updatePreset, commandUpdatePreset);
 
-bot.callbackQuery(KeyListCommand.deletePreset, commandDeletePreset);
+bot.callbackQuery(KeyCommand.deletePreset, commandDeletePreset);
 
-bot.callbackQuery(KeyListCommand.allUser, commandAllUser);
+bot.callbackQuery(KeyCommand.allUser, commandAllUser);
 
 // todo вынести в отдельные фукции yesAnswer noAnswer
-bot.callbackQuery(KeyListCommand.yesAnswer, async (ctx) => {
+bot.callbackQuery(KeyCommand.yesAnswer, async (ctx) => {
   switch (ctx.session.keyCommand) {
-    case KeyListCommand.delete:
+    case KeyCommand.delete:
       await deleteUser(ctx.session.userId || 0);
-      await commandUpdatePreset(ctx);
+      await commandDeleteUser(ctx);
       break;
-    case KeyListCommand.deletePreset:
+    case KeyCommand.deletePreset:
       await deletePreset(ctx);
       await commandUpdatePreset(ctx);
       break;
     default:
       console.error(
-        `Комманда была не назначина в callbackQuery ${KeyListCommand.yesAnswer}`
+        `Комманда была не назначина в callbackQuery ${KeyCommand.yesAnswer}`
       );
       break;
   }
@@ -76,18 +76,18 @@ bot.callbackQuery(KeyListCommand.yesAnswer, async (ctx) => {
   ctx.answerCallbackQuery();
 });
 
-bot.callbackQuery(KeyListCommand.noAnswer, async (ctx) => {
+bot.callbackQuery(KeyCommand.noAnswer, async (ctx) => {
   switch (ctx.session.keyCommand) {
-    case KeyListCommand.delete:
+    case KeyCommand.delete:
       commandDeleteUser(ctx);
       break;
-    case KeyListCommand.deletePreset:
+    case KeyCommand.deletePreset:
       commandUpdatePreset(ctx);
       break;
 
     default:
       console.error(
-        `Комманда была не назначина в callbackQuery ${KeyListCommand.noAnswer}`
+        `Комманда была не назначина в callbackQuery ${KeyCommand.noAnswer}`
       );
       break;
   }
@@ -102,7 +102,7 @@ bot.callbackQuery(/^delete-\d/, commandButtonDeleteUser);
 
 bot.callbackQuery(/^preset-@*/, commandButtonPreset);
 
-bot.callbackQuery(KeyListCommand.backToMenu, async (ctx) => {
+bot.callbackQuery(KeyCommand.backToMenu, async (ctx) => {
   ctx.callbackQuery.message?.editText('Выбирете пункт меню', {
     reply_markup: keyboardMenu,
   });
@@ -113,15 +113,15 @@ bot.callbackQuery(KeyListCommand.backToMenu, async (ctx) => {
 // команды через /
 //============================================================
 
-bot.command([KeyListCommand.set], (ctx: MyContext) =>
-  handleCommand(ctx, KeyListCommand.set)
+bot.command([KeyCommand.set], (ctx: MyContext) =>
+  handleCommand(ctx, KeyCommand.set)
 );
 
-bot.command([KeyListCommand.setIdGitLab], async (ctx: MyContext) =>
-  handleCommand(ctx, KeyListCommand.setIdGitLab)
+bot.command([KeyCommand.setIdGitLab], async (ctx: MyContext) =>
+  handleCommand(ctx, KeyCommand.setIdGitLab)
 );
 
-bot.command([KeyListCommand.menu], async (ctx: MyContext) => {
+bot.command([KeyCommand.menu], async (ctx: MyContext) => {
   await ctx.reply('Выбирете пункт', { reply_markup: keyboardMenu });
 });
 
@@ -150,10 +150,10 @@ bot.on('message', async (ctx: MyContext) => {
   const matches = msg.match(/@\w+/g);
 
   switch (ctx.session.keyCommand) {
-    case KeyListCommand.set:
+    case KeyCommand.set:
       CommandDispatcherInstance.setUser(matches, ctx);
       break;
-    case KeyListCommand.setIdGitLab:
+    case KeyCommand.setIdGitLab:
       CommandDispatcherInstance.setIdGitLab(msgNameId, ctx);
       break;
   }

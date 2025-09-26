@@ -1,5 +1,5 @@
 import { User, IUser } from './db/db';
-import { findUsersBd, findUser } from './db/helpers';
+import { getNameBd, findUser } from './db/helpers';
 import { Context } from 'grammy';
 
 const TEXT_MSG_1 = 'Эти(-от) пользователи(-ль)';
@@ -19,22 +19,21 @@ export class CommandDispatcher {
   async setUser(msgUserNames: string[] | null, ctx: Context): Promise<void> {
     if (!msgUserNames) {
       this.showErrorMsg('Отправьте теги кого хотите добавить в базу.', ctx);
+      // TODO вызвать еще разк команду чтоб добавить людей
       return;
     }
 
-    const { notFindUsersDb, namesBd } = await findUsersBd(msgUserNames);
+    const { notFindUsersDb, usersNameBd } = await getNameBd(msgUserNames);
 
-    notFindUsersDb.forEach((name) => {
-      User.create({ name, idGitLab: 0 }, (err) => {
-        if (err) return;
-      });
+    User.create(notFindUsersDb, (err) => {
+      if (err) return;
     });
 
     await this.messageBot({
       messageId: ctx.msg!.message_id,
       success: notFindUsersDb,
       warning: [],
-      failure: namesBd,
+      failure: usersNameBd,
       textSuccess: `${TEXT_MSG_1} были добавлены в базу`,
       textFailure: `${TEXT_MSG_1} уже существуют в базе`,
       ctx,
@@ -43,19 +42,19 @@ export class CommandDispatcher {
 
   async setIdGitLab(msgNameId: string[], ctx: Context): Promise<void> {
     const [name, id] = msgNameId;
-    const user = await findUser(name, 'id');
+    const users = await findUser([name], 'name');
 
-    if (user) {
-      User.updateGitLabId(user.id, Number(id), (err) => {
+    if (users?.length) {
+      User.updateGitLabId(users[0].id, Number(id), (err) => {
         if (err) console.error(err);
       });
     }
 
     await this.messageBot({
       messageId: ctx.msg!.message_id,
-      success: user ? [name] : [],
+      success: users ? [name] : [],
       warning: [],
-      failure: !user ? [name] : [],
+      failure: !users ? [name] : [],
       textSuccess: `Этому пользователю был добавлен id Git lab: ${id} тег`,
       textFailure: `${TEXT_MSG_1} не существуют в базе`,
       ctx,

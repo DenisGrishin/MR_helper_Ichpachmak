@@ -1,9 +1,9 @@
 import { CallbackQueryContext, Context, SessionFlavor } from 'grammy';
-import { KeyListCommand } from './command/constant';
+import { KeyCommand } from './command/constant';
 import { HydrateFlavor } from '@grammyjs/hydrate';
 
 export interface SessionData {
-  keyCommand?: KeyListCommand | null;
+  keyCommand?: KeyCommand | null;
   userId?: number | null;
 }
 

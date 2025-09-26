@@ -6,7 +6,7 @@ import {
 import { TCallbackQueryContext } from '../type';
 import { findUser, getAllUsers } from '../db/helpers';
 import { User } from '../db/db';
-import { KeyListCommand } from './constant';
+import { KeyCommand } from './constant';
 
 export const commandDeleteUser = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
@@ -29,7 +29,7 @@ export const commandButtonDeleteUser = async (ctx: TCallbackQueryContext) => {
   const id = Number(ctx.callbackQuery.data.split('-')[1]);
   const user = await findUser(id, 'id');
 
-  ctx.session.keyCommand = KeyListCommand.delete;
+  ctx.session.keyCommand = KeyCommand.delete;
   ctx.session.userId = Number(user?.id);
 
   ctx.callbackQuery.message?.editText(

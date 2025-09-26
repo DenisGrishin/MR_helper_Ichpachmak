@@ -1,13 +1,13 @@
 import { InlineKeyboard } from 'grammy';
 import { IUser } from '../db/db';
-import { KeyListCommand } from '../command/constant';
+import { KeyCommand } from '../command/constant';
 
 export const keyboardMenu = new InlineKeyboard()
-  .text('Активировать пользователя', KeyListCommand.editStatusUser)
-  .text('Удалить пользователя', KeyListCommand.delete)
+  .text('Активировать пользователя', KeyCommand.editStatusUser)
+  .text('Удалить пользователя', KeyCommand.delete)
   .row()
-  .text('Обновить пресет', KeyListCommand.updatePreset)
-  .text('Список всех пользователей', KeyListCommand.allUser)
+  .text('Обновить пресет', KeyCommand.updatePreset)
+  .text('Список всех пользователей', KeyCommand.allUser)
   .row()
   .url(
     'Документация',
@@ -16,12 +16,12 @@ export const keyboardMenu = new InlineKeyboard()
 
 export const keyboardBack = new InlineKeyboard().text(
   '< Назад',
-  KeyListCommand.backToMenu
+  KeyCommand.backToMenu
 );
 
 export const keyboardAskUserConfirmation = new InlineKeyboard()
-  .text('Нет', KeyListCommand.noAnswer)
-  .text('Да', KeyListCommand.yesAnswer);
+  .text('Нет', KeyCommand.noAnswer)
+  .text('Да', KeyCommand.yesAnswer);
 
 export const chunkInlineKeyboardUser = ({
   list,
@@ -44,7 +44,7 @@ export const chunkInlineKeyboardUser = ({
   }
 
   keyboardButtonRows.push([
-    InlineKeyboard.text('< Назад', KeyListCommand.backToMenu),
+    InlineKeyboard.text('< Назад', KeyCommand.backToMenu),
   ]);
 
   return keyboardButtonRows;
@@ -71,8 +71,8 @@ export const chunkInlineKeyboardPreset = ({
   }
 
   keyboardButtonRows.push([
-    InlineKeyboard.text('< Назад', KeyListCommand.backToMenu),
-    InlineKeyboard.text('Удалить свой пресет', KeyListCommand.deletePreset),
+    InlineKeyboard.text('< Назад', KeyCommand.backToMenu),
+    InlineKeyboard.text('Удалить свой пресет', KeyCommand.deletePreset),
   ]);
 
   return keyboardButtonRows;

@@ -5,7 +5,7 @@ import {
 } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
 import { findUser, getAllUsers } from '../db/helpers';
-import { KeyListCommand } from './constant';
+import { KeyCommand } from './constant';
 import { User } from '../db/db';
 
 export const commandUpdatePreset = async (ctx: TCallbackQueryContext) => {
@@ -34,7 +34,7 @@ export const commandUpdatePreset = async (ctx: TCallbackQueryContext) => {
 
 export const commandDeletePreset = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
-  ctx.session.keyCommand = KeyListCommand.deletePreset;
+  ctx.session.keyCommand = KeyCommand.deletePreset;
 
   await ctx.callbackQuery.message?.editText(
     'Вы уверены, что хотите удалить свой пресет?',
