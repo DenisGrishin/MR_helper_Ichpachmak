@@ -4,7 +4,12 @@ import {
   keyboardAskUserConfirmation,
 } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
-import { findUser, getAllUsers } from '../db/helpers';
+import {
+  findUser,
+  findUserById,
+  findUsersByName,
+  getAllUsers,
+} from '../db/helpers';
 import { KeyCommand } from './constant';
 import { User } from '../db/db';
 
@@ -16,9 +21,9 @@ export const commandUpdatePreset = async (ctx: TCallbackQueryContext) => {
 
   if (!authorName) throw new Error(`Такого имени нет ${authorName}`);
 
-  const user = await findUser(`@${authorName}`, 'name');
+  const user = await findUsersByName([`@${authorName}`]);
 
-  const preset = JSON.parse(user?.preset || '');
+  const preset = JSON.parse(user[0].preset || '');
 
   const keyboardUser = InlineKeyboard.from(
     chunkInlineKeyboardPreset({ list: listUsers, preset })
@@ -46,9 +51,9 @@ export const commandDeletePreset = async (ctx: TCallbackQueryContext) => {
 
 export const deletePreset = async (ctx: TCallbackQueryContext) => {
   const authorName = ctx.from.username;
-  const user = await findUser(`@${authorName}`, 'name');
+  const user = await findUsersByName([`@${authorName}`]);
 
-  User.updatePreset(Number(user?.id), JSON.stringify([]), (err) => {
+  User.updatePreset(Number(user[0].id), JSON.stringify([]), (err) => {
     if (err) console.error(err);
   });
 };
@@ -61,16 +66,16 @@ export const commandButtonPreset = async (ctx: TCallbackQueryContext) => {
 
   if (!authorName) throw new Error('Имени нет в  ctx.from.username ');
 
-  const user = await findUser(`@${authorName}`, 'name');
+  const user = await findUsersByName([`@${authorName}`]);
 
-  const presetList = JSON.parse(user?.preset || '[]');
+  const presetList = JSON.parse(user[0].preset || '[]');
 
   const updateListPreset = presetList.includes(nameSlug)
     ? presetList.filter((name: string) => name !== nameSlug)
     : [...presetList, nameSlug];
 
   User.updatePreset(
-    Number(user?.id),
+    Number(user[0].id),
     JSON.stringify(updateListPreset),
     (err) => {
       if (err) console.error(err);

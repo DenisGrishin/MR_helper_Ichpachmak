@@ -38,12 +38,44 @@ export class User {
     if (list.length === 0) {
       return cb(new Error('Вы не отправили теги'));
     }
-
+    // TODO вот тут разделить id или  name
     const placeholders = list.map(() => '?').join(', ');
 
     const sql = `SELECT * FROM users WHERE ${keySearch} IN (${placeholders})`;
 
     db.all(sql, list, cb);
+  }
+
+  static findUsersByName(value: string[]): Promise<IUser[]> {
+    return new Promise((resolve, reject) => {
+      if (value.length === 0) {
+        return reject(new Error('Вы не отправили теги'));
+      }
+
+      const placeholders = value.map(() => '?').join(', ');
+
+      const sql = `SELECT * FROM users WHERE name IN (${placeholders})`;
+
+      db.all(sql, value, (err, rows: IUser[]) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+  }
+
+  static findUserById(id: number): Promise<IUser> {
+    return new Promise((resolve, reject) => {
+      if (!id) {
+        return reject(new Error('ID не передан'));
+      }
+
+      const sql = `SELECT * FROM users WHERE id = ?`;
+
+      db.get(sql, id, (err, row: IUser) => {
+        if (err) return reject(err);
+        resolve(row);
+      });
+    });
   }
 
   static findByIdGitLabs(

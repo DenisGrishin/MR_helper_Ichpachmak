@@ -1,11 +1,13 @@
 import { Context } from 'grammy';
 import { ApiGitLab } from '../api/apiGitLab';
-import { findUser } from '../db/helpers';
+import { findUser, findUsersByName } from '../db/helpers';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
 export const handlerPresetMR = async (ctx: Context) => {
   try {
-    const authorMsg = await findUser(`@${ctx.message!.from!.username}`);
+    const authorMsg = await findUsersByName([
+      `@${ctx.message!.from!.username}`,
+    ]);
 
     const text = ctx.message!.text!;
     const idMR = text.match(REGEX_MR_ID)![1];
@@ -33,7 +35,7 @@ ${title}
 
 ${description} 
 
-${JSON.parse(authorMsg?.preset || '[]').join(', ')}
+${JSON.parse(authorMsg[0].preset || '[]').join(', ')}
     `;
     // @ts-ignore
     await ctx.reply(successMsg, { disable_web_page_preview: true });

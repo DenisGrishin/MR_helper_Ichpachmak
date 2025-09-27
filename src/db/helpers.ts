@@ -9,23 +9,34 @@ export function getAllUsers(): Promise<IUser[]> {
   });
 }
 
-export function findUser(
-  slug: number | string[],
-  keySearch: 'id' | 'name'
-): Promise<IUser[] | undefined> {
-  return new Promise((resolve, reject) => {
-    User.findUsers(slug as string[], keySearch, (err, user) => {
-      if (err) return reject(err);
-      resolve(user);
-    });
-  });
-}
+export const findUsersByName = async (values: string[]): Promise<IUser[]> => {
+  try {
+    if (!values.length) throw new Error('Вы не передали теги ');
 
-export async function getNameBd(users?: string[]): Promise<{
+    const res = await User.findUsersByName(values);
+
+    return res;
+  } catch (error) {
+    console.error('Ошибка', error);
+    throw error;
+  }
+};
+
+export const findUserById = async (id: number): Promise<IUser | undefined> => {
+  try {
+    const res = await User.findUserById(id);
+
+    return res;
+  } catch (error) {
+    console.error('Ошибка', error);
+  }
+};
+
+export async function getNamesBd(users?: string[]): Promise<{
   notFindUsersDb: string[];
   usersNameBd: string[];
 }> {
-  const findUsersDb = await findUser(users || [], 'name');
+  const findUsersDb = await findUsersByName(users || []);
 
   const usersNameBd = findUsersDb?.map((user) => user.name) || [];
 

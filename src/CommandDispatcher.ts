@@ -1,6 +1,6 @@
-import { User, IUser } from './db/db';
-import { getNameBd, findUser } from './db/helpers';
-import { Context } from 'grammy';
+import { User } from './db/db';
+import { getNamesBd, findUsersByName } from './db/helpers';
+import type { Context } from 'grammy';
 
 const TEXT_MSG_1 = 'Эти(-от) пользователи(-ль)';
 
@@ -23,7 +23,7 @@ export class CommandDispatcher {
       return;
     }
 
-    const { notFindUsersDb, usersNameBd } = await getNameBd(msgUserNames);
+    const { notFindUsersDb, usersNameBd } = await getNamesBd(msgUserNames);
 
     User.create(notFindUsersDb, (err) => {
       if (err) return;
@@ -40,22 +40,31 @@ export class CommandDispatcher {
     });
   }
 
-  async setIdGitLab(msgNameId: string[], ctx: Context): Promise<void> {
-    const [name, id] = msgNameId;
-    const users = await findUser([name], 'name');
+  async setIdGitLab(ctx: Context) {
+    const msg = ctx.message!.text!;
+    const msgGitId = Number(msg.split(' ').filter((el) => !!el)[1]);
+    const tags = msg.match(/@\w+/g);
 
-    if (users?.length) {
-      User.updateGitLabId(users[0].id, Number(id), (err) => {
-        if (err) console.error(err);
-      });
+    if (!tags) throw new Error('Вы не передали тег');
+
+    if (isNaN(msgGitId)) {
+      throw new Error('Некорректный GitLab ID');
     }
+
+    const users = await findUsersByName(tags);
+
+    const { id } = users[0];
+
+    User.updateGitLabId(id, Number(msgGitId), (err) => {
+      if (err) console.error(err);
+    });
 
     await this.messageBot({
       messageId: ctx.msg!.message_id,
-      success: users ? [name] : [],
+      success: users ? tags : [],
       warning: [],
-      failure: !users ? [name] : [],
-      textSuccess: `Этому пользователю был добавлен id Git lab: ${id} тег`,
+      failure: !users ? tags : [],
+      textSuccess: `Этому пользователю был добавлен id Git lab: ${msgGitId} тег`,
       textFailure: `${TEXT_MSG_1} не существуют в базе`,
       ctx,
     });

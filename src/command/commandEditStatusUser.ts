@@ -1,7 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 import { chunkInlineKeyboardUser } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
-import { findUser, getAllUsers } from '../db/helpers';
+import { findUserById, getAllUsers } from '../db/helpers';
 import { User } from '../db/db';
 
 export const commandEditStatusUser = async (ctx: TCallbackQueryContext) => {
@@ -23,7 +23,7 @@ export const commandEditStatusUser = async (ctx: TCallbackQueryContext) => {
 export const commandButtonEditUser = async (ctx: TCallbackQueryContext) => {
   const id = Number(ctx.callbackQuery.data.split('-')[1]);
   ctx.answerCallbackQuery();
-  const user = await findUser(id, 'id');
+  const user = await findUserById(id);
 
   const statusIsActive = !user?.isActive ? 1 : 0;
 

@@ -4,7 +4,7 @@ import {
   keyboardAskUserConfirmation,
 } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
-import { findUser, getAllUsers } from '../db/helpers';
+import { findUserById, getAllUsers } from '../db/helpers';
 import { User } from '../db/db';
 import { KeyCommand } from './constant';
 
@@ -27,7 +27,7 @@ export const commandDeleteUser = async (ctx: TCallbackQueryContext) => {
 export const commandButtonDeleteUser = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
   const id = Number(ctx.callbackQuery.data.split('-')[1]);
-  const user = await findUser(id, 'id');
+  const user = await findUserById(id);
 
   ctx.session.keyCommand = KeyCommand.delete;
   ctx.session.userId = Number(user?.id);

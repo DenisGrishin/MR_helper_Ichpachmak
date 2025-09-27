@@ -146,15 +146,14 @@ bot.on('message', async (ctx: MyContext) => {
   if (!ctx.session.keyCommand) return;
 
   const msg = ctx.message!.text!;
-  const msgNameId = msg.split(' ').filter((el) => !!el);
-  const matches = msg.match(/@\w+/g);
+  const tags = msg.match(/@\w+/g);
 
   switch (ctx.session.keyCommand) {
     case KeyCommand.set:
-      CommandDispatcherInstance.setUser(matches, ctx);
+      CommandDispatcherInstance.setUser(tags, ctx);
       break;
     case KeyCommand.setIdGitLab:
-      CommandDispatcherInstance.setIdGitLab(msgNameId, ctx);
+      CommandDispatcherInstance.setIdGitLab(ctx);
       break;
   }
   ctx.session.keyCommand = null;
