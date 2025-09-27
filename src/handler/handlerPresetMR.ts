@@ -1,6 +1,6 @@
 import { Context } from 'grammy';
 import { ApiGitLab } from '../api/apiGitLab';
-import { findUser, findUsersByName } from '../db/helpers';
+import { findUsersByName } from '../db/helpers';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
 export const handlerPresetMR = async (ctx: Context) => {
@@ -21,7 +21,11 @@ export const handlerPresetMR = async (ctx: Context) => {
     const linkMR = ctx.message!.text?.slice(1);
     const title = MR.title ? `Заголовок: ${MR.title.slice(0, 50)}` : '';
     const description = MR.description
-      ? `Описание: ${MR.description.slice(0, 300)}`
+      ? `Описание: ${
+          MR.description.length > 500
+            ? `${MR.description.slice(0, 500)}...`
+            : MR.description
+        }`
       : '';
 
     const successMsg = `МР от ${MR.author.name} @${ctx.message!.from!.username}
@@ -38,7 +42,10 @@ ${description}
 ${JSON.parse(authorMsg[0].preset || '[]').join(', ')}
     `;
     // @ts-ignore
-    await ctx.reply(successMsg, { disable_web_page_preview: true });
+    await ctx.reply(successMsg, {
+      disable_web_page_preview: true,
+      parse_mode: 'MarkdownV2',
+    } as any);
   } catch (err) {
     console.error('❌ Не удалось удалить сообщение:', err);
   }

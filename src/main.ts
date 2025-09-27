@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import { Bot, GrammyError, HttpError, session } from 'grammy';
-import { CommandDispatcher } from './CommandDispatcher';
 import { hydrate } from '@grammyjs/hydrate';
 import {
   handleCommand,
@@ -14,6 +13,7 @@ import {
   commandDeletePreset,
   deletePreset,
   commandButtonPreset,
+  CommandDispatcher,
 } from './command';
 import { KeyCommand, LIST_MY_COMMAND } from './command/constant';
 import {
@@ -144,13 +144,9 @@ bot.hears(/!https:\/\/gitlab.com/, handlerPresetMR);
 
 bot.on('message', async (ctx: MyContext) => {
   if (!ctx.session.keyCommand) return;
-
-  const msg = ctx.message!.text!;
-  const tags = msg.match(/@\w+/g);
-
   switch (ctx.session.keyCommand) {
     case KeyCommand.set:
-      CommandDispatcherInstance.setUser(tags, ctx);
+      CommandDispatcherInstance.setUser(ctx);
       break;
     case KeyCommand.setIdGitLab:
       CommandDispatcherInstance.setIdGitLab(ctx);

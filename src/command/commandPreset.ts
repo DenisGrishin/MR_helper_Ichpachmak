@@ -4,12 +4,7 @@ import {
   keyboardAskUserConfirmation,
 } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
-import {
-  findUser,
-  findUserById,
-  findUsersByName,
-  getAllUsers,
-} from '../db/helpers';
+import { findUsersByName, getAllUsers } from '../db/helpers';
 import { KeyCommand } from './constant';
 import { User } from '../db/db';
 
@@ -17,11 +12,11 @@ export const commandUpdatePreset = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
   const listUsers = await getAllUsers();
 
-  const authorName = ctx.from.username;
+  const formUser = ctx.from.username;
 
-  if (!authorName) throw new Error(`Такого имени нет ${authorName}`);
+  if (!formUser) throw new Error(`Такого имени нет ${formUser}`);
 
-  const user = await findUsersByName([`@${authorName}`]);
+  const user = await findUsersByName([`@${formUser}`]);
 
   const preset = JSON.parse(user[0].preset || '');
 

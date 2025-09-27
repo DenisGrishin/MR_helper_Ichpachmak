@@ -26,8 +26,13 @@ export interface IUser {
 }
 
 export class User {
-  static all(cb: (err: Error | null, users?: IUser[]) => void): void {
-    db.all('SELECT * FROM users', cb);
+  static all(): Promise<IUser[]> {
+    return new Promise((resolve, reject) => {
+      db.all('SELECT * FROM users', (err, rows: IUser[]) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
   }
 
   static findUsers(
@@ -78,14 +83,17 @@ export class User {
     });
   }
 
-  static findByIdGitLabs(
-    idGitLabs: number[],
-    cb: (err: Error | null, users?: IUser[]) => void
-  ): void {
-    const placeholders = idGitLabs.map(() => '?').join(',');
-    const sql = `SELECT * FROM users WHERE idGitLab IN (${placeholders})`;
+  static findByIdGitLabs(idGitLabs: number[]): Promise<IUser[]> {
+    return new Promise((resolve, reject) => {
+      const placeholders = idGitLabs.map(() => '?').join(',');
 
-    db.all(sql, idGitLabs, cb);
+      const sql = `SELECT * FROM users WHERE idGitLab IN (${placeholders})`;
+
+      db.all(sql, idGitLabs, (err, rows: IUser[]) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
   }
 
   static create(

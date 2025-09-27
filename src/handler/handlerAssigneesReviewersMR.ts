@@ -44,7 +44,11 @@ export const handlerAssigneesReviewersMR = async (ctx: MyContext) => {
     const linkMR = ctx.message!.text?.slice(1);
     const title = MR.title ? `Заголовок: ${MR.title.slice(0, 50)}` : '';
     const description = MR.description
-      ? `Описание: ${MR.description.slice(0, 300)}`
+      ? `Описание: ${
+          MR.description.length > 500
+            ? `${MR.description.slice(0, 500)}...`
+            : MR.description
+        }`
       : '';
 
     const errorMsg = `
@@ -72,9 +76,9 @@ ${formattedUsers}
     `;
 
     await ctx.reply(isError ? errorMsg : successMsg, {
-      // @ts-ignore
       disable_web_page_preview: true,
-    });
+      parse_mode: 'MarkdownV2',
+    } as any);
   } catch (err) {
     console.error('❌ Не удалось удалить сообщение:', err);
   }
