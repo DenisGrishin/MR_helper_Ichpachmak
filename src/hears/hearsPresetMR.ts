@@ -3,7 +3,7 @@ import { ApiGitLab } from '../api/apiGitLab';
 import { findUsersByName } from '../db/helpers';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
-export const handlerPresetMR = async (ctx: Context) => {
+export const hearsPresetMR = async (ctx: Context) => {
   try {
     const authorMsg = await findUsersByName([
       `@${ctx.message!.from!.username}`,

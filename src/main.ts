@@ -17,10 +17,11 @@ import {
 } from './command';
 import { KeyCommand, LIST_MY_COMMAND } from './command/constant';
 import {
-  handlerAssigneesReviewersMR,
-  handlerPresetMR,
-  handlerActiveMR,
-} from './handler';
+  hearsAssigneesReviewersMR,
+  hearsPresetMR,
+  hearsActiveMR,
+  hearsDelMsgBot,
+} from './hears';
 import { MyContext, SessionData } from './type';
 import { keyboardMenu } from './keyboards/keyboard';
 
@@ -130,13 +131,15 @@ bot.command([KeyCommand.menu], async (ctx: MyContext) => {
 //============================================================
 
 // git.russpass.dev gitlab.com — дергаем всех кто isActive
-bot.hears(/!!https:\/\/gitlab.com/, handlerActiveMR);
+bot.hears(/!!https:\/\/gitlab.com/, hearsActiveMR);
 
 // дергаем тех кого добавили в гит idAssignees idReviewers
-bot.hears(/~https:\/\/gitlab.com/, handlerAssigneesReviewersMR);
+bot.hears(/~https:\/\/gitlab.com/, hearsAssigneesReviewersMR);
 
 // дергаем по пресету
-bot.hears(/!https:\/\/gitlab.com/, handlerPresetMR);
+bot.hears(/!https:\/\/gitlab.com/, hearsPresetMR);
+
+bot.hears('del-msg-bot', hearsDelMsgBot);
 
 //============================================================
 // обработка сообщений после команд /

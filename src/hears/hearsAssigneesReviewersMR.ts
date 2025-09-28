@@ -4,7 +4,7 @@ import { findUsersByIdGitlab } from '../db/helpers';
 import { MyContext } from '../type';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
-export const handlerAssigneesReviewersMR = async (ctx: MyContext) => {
+export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
   try {
     const text = ctx.message!.text!;
 

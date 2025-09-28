@@ -4,7 +4,7 @@ import { getAllUsers } from '../db/helpers';
 import { MyContext } from '../type';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
-export const handlerActiveMR = async (ctx: MyContext) => {
+export const hearsActiveMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
   try {
     const users: IUser[] = await getAllUsers();

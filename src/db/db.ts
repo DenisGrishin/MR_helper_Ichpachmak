@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS users
   db.run(sql);
 });
 
+// db.serialize(() => {
+//   db.run(`ALTER TABLE users ADD COLUMN task TEXT DEFAULT '[]'`);
+// });
+
 export interface IUser {
   id: number;
   name: string;
