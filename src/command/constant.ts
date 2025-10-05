@@ -11,6 +11,7 @@ export enum KeyCommand {
   noAnswer = 'no_answer',
   deletePreset = 'delete_preset',
   backToMenu = 'back_to_menu',
+  completedTasks = 'completed_tasks',
 }
 
 export const TEXT_COMMAND: Record<string, string> = {
@@ -25,5 +26,9 @@ export const LIST_MY_COMMAND = [
   {
     command: KeyCommand.setIdGitLab,
     description: 'Добавить пользователя id gitLab',
+  },
+  {
+    command: KeyCommand.completedTasks,
+    description: 'Посмотреть список выполененых задач',
   },
 ];

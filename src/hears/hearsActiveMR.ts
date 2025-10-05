@@ -10,11 +10,13 @@ export const hearsActiveMR = async (ctx: MyContext) => {
   try {
     const users: IUser[] = await getAllUsers();
 
-    const formUser = `@${ctx?.from?.username}`;
+    const authorMR = `@${ctx?.from?.username}`;
+
+    const dataAuthorMR = users.find((user) => user.name === authorMR);
 
     const formattedUsers = users
       .map((u) => (u.isActive ? u.name : undefined))
-      .filter((el) => el !== undefined && el !== formUser)
+      .filter((el) => el !== undefined && el !== authorMR)
       .join(' ');
 
     const text = ctx.message!.text!;
@@ -27,7 +29,9 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     const matchTask = nameBranch.match(REGEX_BRANCH_ID);
     const taskNumber = matchTask?.[0] ?? 'UNKNOWN';
 
-    recordTask(taskNumber, formUser, ctx);
+    if (dataAuthorMR && taskNumber) {
+      recordTask(taskNumber, dataAuthorMR, ctx);
+    }
 
     const taskLink = `<b>Задача:</b> https://itpm.mos.ru/browse/${taskNumber}\n\n`;
 

@@ -4,3 +4,4 @@ export * from './commandEditStatusUser';
 export * from './commandDeleteUser';
 export * from './commandPreset';
 export * from './CommandDispatcher';
+export { commandCompletedTasks } from './commandCompletedTasks';

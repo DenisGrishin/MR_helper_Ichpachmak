@@ -3,3 +3,4 @@ export * from './hearsAssigneesReviewersMR';
 export * from './hearsActiveMR';
 export * from './hearsDelMsgBot';
 export { recordTask } from './helper';
+export type { CompletedTask } from './type';

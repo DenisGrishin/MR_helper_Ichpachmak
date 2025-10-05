@@ -14,6 +14,7 @@ import {
   deletePreset,
   commandButtonPreset,
   CommandDispatcher,
+  commandCompletedTasks,
 } from './command';
 import { KeyCommand, LIST_MY_COMMAND } from './command/constant';
 import {
@@ -120,6 +121,10 @@ bot.command([KeyCommand.set], (ctx: MyContext) =>
 
 bot.command([KeyCommand.setIdGitLab], async (ctx: MyContext) =>
   handleCommand(ctx, KeyCommand.setIdGitLab)
+);
+
+bot.command([KeyCommand.completedTasks], async (ctx: MyContext) =>
+  commandCompletedTasks(ctx)
 );
 
 bot.command([KeyCommand.menu], async (ctx: MyContext) => {
