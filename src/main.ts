@@ -28,7 +28,7 @@ import { keyboardMenu } from './keyboards/keyboard';
 // TODO убрать в отдельный файл типы
 
 function initial(): SessionData {
-  return { keyCommand: null, userId: null };
+  return { keyCommand: null, userId: null, timeToCheck: null };
 }
 
 const bot = new Bot<MyContext>(process.env.BOT_API_KEY as string);
