@@ -136,13 +136,28 @@ bot.command([KeyCommand.menu], async (ctx: MyContext) => {
 //============================================================
 
 // git.russpass.dev gitlab.com — дергаем всех кто isActive
-bot.hears(/!!https:\/\/gitlab.com/, hearsActiveMR);
+bot.hears(
+  process.env.IS_DOMIN_PROD === 'true'
+    ? /!!https:\/\/git.russpass.dev/
+    : /!!https:\/\/gitlab.com/,
+  hearsActiveMR
+);
 
 // дергаем тех кого добавили в гит idAssignees idReviewers
-bot.hears(/~https:\/\/gitlab.com/, hearsAssigneesReviewersMR);
+bot.hears(
+  process.env.IS_DOMIN_PROD === 'true'
+    ? /~https:\/\/git.russpass.dev/
+    : /~https:\/\/gitlab.com/,
+  hearsAssigneesReviewersMR
+);
 
 // дергаем по пресету
-bot.hears(/!https:\/\/gitlab.com/, hearsPresetMR);
+bot.hears(
+  process.env.IS_DOMIN_PROD === 'true'
+    ? /!https:\/\/git.russpass.dev/
+    : /!https:\/\/gitlab.com/,
+  hearsPresetMR
+);
 
 bot.hears('del-msg-bot', hearsDelMsgBot);
 

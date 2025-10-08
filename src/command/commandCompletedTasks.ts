@@ -13,11 +13,15 @@ export const commandCompletedTasks = async (ctx: MyContext) => {
     .map((task: CompletedTask) => {
       return task.taskNumber;
     })
-    .join(' ');
+    .join('\n');
   await ctx.reply(
-    `Список выполненных задач:\n${
-      parseCompletedTasks.length ? listCompletedTasks : 'Спсиок пуст.'
-    }`,
-    { reply_parameters: { message_id: ctx.msg!.message_id } }
+    'Список выполненных задач:\n' +
+      `<pre><code>${
+        parseCompletedTasks.length ? listCompletedTasks : 'Список пуст.'
+      }</code></pre>`,
+    {
+      reply_parameters: { message_id: ctx.msg!.message_id },
+      parse_mode: 'HTML',
+    }
   );
 };

@@ -46,24 +46,22 @@ const hasDayChanged = ({
   timeToCheck,
 }: {
   dateMsg?: number;
-  timeToCheck?: number;
+  timeToCheck?: number | null;
 }) => {
   if (!dateMsg || !timeToCheck) return false;
 
   const parseCurrentDate = new Date(dateMsg * 1000);
   const parseTimeToCheck = new Date(timeToCheck * 1000);
 
-  const isNewDay =
-    parseCurrentDate.getDate() !== parseTimeToCheck.getDate() &&
-    parseCurrentDate.getMonth() !== parseTimeToCheck.getMonth();
+  const isNewDay = parseCurrentDate.getDate() !== parseTimeToCheck.getDate();
 
   if (isNewDay) return true;
   return false;
 };
 
-const getOneCompletedTask = (
-  allCompletedTasks: { completedTasks: string }[]
-): CompletedTask => {
+const getOneCompletedTask = async () => {
+  const allCompletedTasks = await User.getCompletedTasks();
+
   let completedTask = null;
 
   for (let index = 0; index < allCompletedTasks.length; index++) {
@@ -88,15 +86,14 @@ export const recordTask = async (
   const completedTasks = JSON.parse(authorMR.completedTasks);
 
   // todo учесть часовой пояс
-  // этот код отвечает если вермя для проверки
+  // этот код отвечает если нет времени для проверки нового дня(timeToCheck)
   if (!timeToCheck) {
-    const allCompletedTasks = await User.getCompletedTasks();
-    const oneCompletedTask = getOneCompletedTask(allCompletedTasks);
+    const oneCompletedTask = await getOneCompletedTask();
 
-    if (!oneCompletedTask) {
+    if (!oneCompletedTask?.length) {
       timeToCheck = createTimeToCheck(ctx);
     } else {
-      timeToCheck = oneCompletedTask.dateTask;
+      timeToCheck = oneCompletedTask[0].dateTask;
       ctx.session.timeToCheck = timeToCheck;
     }
   }
@@ -114,7 +111,6 @@ export const recordTask = async (
   }
 
   if (isRepeatCompletedTask) {
-    console.log('Такой номер задчи уже есть ' + taskNumber);
     return;
   }
 
@@ -132,29 +128,3 @@ export const recordTask = async (
     console.error(error);
   }
 };
-
-// const isNewDay = ({
-//   currentTimestamp,
-//   previousTimestamp,
-// }: {
-//   currentTimestamp?: number;
-//   previousTimestamp?: number;
-// }): boolean => {
-//   if (currentTimestamp === undefined || previousTimestamp === undefined) {
-//     return false;
-//   }
-
-//   // Приводим к миллисекундам (если временные метки в секундах)
-//   const currentMs = currentTimestamp * 1000;
-//   const previousMs = previousTimestamp * 1000;
-
-//   // Количество миллисекунд в одном дне
-//   const msPerDay = 24 * 60 * 60 * 1000;
-
-//   // Вычисляем количество дней с 1 января 1970 года
-//   const currentDays = Math.floor(currentMs / msPerDay);
-//   const previousDays = Math.floor(previousMs / msPerDay);
-
-//   // Если дни разные — новый день
-//   return currentDays !== previousDays;
-// };
