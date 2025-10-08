@@ -3,7 +3,9 @@ import { IUser } from '../db/db';
 import { getAllUsers } from '../db/helpers';
 import { MyContext } from '../type';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
-import { recordTask } from './helper';
+import { TaskService } from './helper';
+
+const taskService = new TaskService();
 
 export const hearsActiveMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
@@ -30,7 +32,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     const taskNumber = matchTask?.[0] ?? 'UNKNOWN';
 
     if (dataAuthorMR && taskNumber) {
-      recordTask(taskNumber, dataAuthorMR, ctx);
+      taskService.recordTask(taskNumber, dataAuthorMR, ctx);
     }
 
     const taskLink = `<b>Задача:</b> https://itpm.mos.ru/browse/${taskNumber}\n\n`;
@@ -44,7 +46,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     const description = MR.description
       ? `<b>Описание:</b> ${
           MR.description.length > 500
-            ? `${MR.description.slice(0, 500)}...`
+            ? MR.description.slice(0, 500).trim() + '...'
             : MR.description
         }\n\n`
       : '';

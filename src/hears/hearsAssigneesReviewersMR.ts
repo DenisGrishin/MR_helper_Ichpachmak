@@ -4,6 +4,9 @@ import { findUsersByIdGitlab } from '../db/helpers';
 import { MyContext } from '../type';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 
+const msgSuccessText = (t: string) => `✅  ${t} был добавлен в Git Lab`;
+const msgWarningText = (t: string) => `⚠️  ${t} не был добавлен в Git Lab`;
+
 export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
   try {
     const text = ctx.message!.text!;
@@ -37,9 +40,6 @@ export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 
     const isError = !idAssignees || !idReviewers;
-
-    const msgSuccessText = (t: string) => `✅  ${t} был добавлен в Git Lab`;
-    const msgWarningText = (t: string) => `⚠️  ${t} не был добавлен в Git Lab`;
 
     const linkMR = ctx.message!.text?.slice(1);
     const title = MR.title ? `Заголовок: ${MR.title.slice(0, 50)}` : '';
