@@ -1,6 +1,4 @@
-import { ApiGitLab } from '../api/apiGitLab';
 import { findUsersByName } from '../db/helpers';
-import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 import { MyContext } from '../type';
 import {
   fetchMR,
@@ -16,6 +14,14 @@ export const hearsPresetMR = async (ctx: MyContext) => {
       `@${ctx.message!.from!.username}`,
     ]);
 
+    const preset = JSON.parse(dataAuthorMR.preset || '[]');
+
+    if (!preset.length) {
+      await ctx.reply(
+        'У вас ещё нет  пресета.\n\nВы можете создать его через команду /menu → «Обновить пресет»'
+      );
+      return;
+    }
     const MR = await fetchMR(ctx);
 
     if (!MR) return;
@@ -25,7 +31,7 @@ export const hearsPresetMR = async (ctx: MyContext) => {
     const message = messageGenerator({
       ctx,
       MR,
-      usersTags: JSON.parse(dataAuthorMR.preset || '[]'),
+      usersTags: preset,
       taskNumber,
     });
 
