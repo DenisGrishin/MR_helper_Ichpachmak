@@ -26,14 +26,16 @@ export const messageGenerator = ({
   ctx,
   usersTags,
   taskNumber,
+  valueSliceLinkMR = 1,
 }: {
   MR: any;
   ctx: MyContext;
   usersTags: string;
   taskNumber: string;
+  valueSliceLinkMR?: number;
 }) => {
   const taskLink = `<b>Задача:</b> https://itpm.mos.ru/browse/${taskNumber}\n\n`;
-  const linkMR = `<b>МР:</b> ${ctx.message!.text?.slice(2)}\n\n`;
+  const linkMR = `<b>МР:</b> ${ctx.message!.text?.slice(valueSliceLinkMR)}\n\n`;
   const title = MR.title ? `<b>Заголовок:</b> ${MR.title}\n\n` : '';
 
   const description = MR.description

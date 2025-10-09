@@ -179,20 +179,29 @@ bot.on('message', async (ctx: MyContext) => {
 });
 
 //============================================================
-// Обработка ошибок согласно документации
+// Обработка ошибок
 //============================================================
 
-bot.catch((err) => {
+bot.catch(async (err) => {
   const ctx = err.ctx;
   console.error(`Error while handling update ${ctx.update.update_id}:`);
   const e = err.error;
 
+  if (ctx && ctx.reply) {
+    try {
+      await ctx.reply('Извините, произошла ошибка. Попробуйте позже.');
+    } catch (replyError) {
+      console.error('Не удалось отправить сообщение об ошибке:', replyError);
+    }
+  }
+
+  // Логирование ошибки
   if (e instanceof GrammyError) {
-    console.error('Error in request:', e.description);
+    console.error('Ошибка в запросе:', e.description);
   } else if (e instanceof HttpError) {
-    console.error('Could not contact Telegram:', e);
+    console.error('Не удалось связаться с Telegram:', e);
   } else {
-    console.error('Unknown error:', e);
+    console.error('Неизвестная ошибка:', e);
   }
 });
 
