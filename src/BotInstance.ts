@@ -61,9 +61,11 @@ export class BotInstance {
 
     this.bot.api.setMyCommands(LIST_MY_COMMAND);
 
-    this.initInteractiveMenu();
+    // тут надо соблюдать порядок вызовов
+    // TODO найти про это инфу
     this.initHears();
     this.initCommands();
+    this.initInteractiveMenu();
     this.initErrorObserver();
   }
 

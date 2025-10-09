@@ -6,7 +6,8 @@ import { BotInstance } from './BotInstance';
 
 const bot = new Bot<MyContext>(process.env.BOT_API_KEY as string);
 
-new BotInstance({ bot: bot });
+new BotInstance({ bot: bot, baseUrl: process.env.BASE_URL });
+new BotInstance({ bot: bot, baseUrl: process.env.BASE_URL_PROD });
 
 //============================================================
 // Функция запуска бота
