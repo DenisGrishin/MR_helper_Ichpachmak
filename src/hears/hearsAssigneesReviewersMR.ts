@@ -3,7 +3,12 @@ import { IUser } from '../db/db';
 import { findUsersByIdGitlab, findUsersByName } from '../db/helpers';
 import { MyContext } from '../type';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
-import { taskService } from './helper';
+import {
+  fetchMR,
+  getTaskNumber,
+  messageGenerator,
+  taskService,
+} from './helper';
 
 const msgSuccessText = (t: string) => `✅  ${t} был добавлен в Git Lab`;
 const msgWarningText = (t: string) => `⚠️  ${t} не был добавлен в Git Lab`;
@@ -13,16 +18,11 @@ export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
   const [dataAuthorMR] = await findUsersByName([authorMR]);
 
   try {
-    // ====
-    const text = ctx.message!.text!;
-    const idMR = text.match(REGEX_MR_ID)![1];
-    const MR = await ApiGitLab.getMR(idMR);
+    const MR = await fetchMR(ctx);
 
     if (!MR) return;
-    const nameBranch = MR.source_branch;
 
-    const matchTask = nameBranch.match(REGEX_BRANCH_ID);
-    const taskNumber = matchTask?.[0] ?? 'UNKNOWN';
+    const taskNumber = getTaskNumber(MR);
 
     if (dataAuthorMR && taskNumber) {
       taskService.recordTask(taskNumber, dataAuthorMR, ctx);
@@ -37,11 +37,16 @@ export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
 
     const formattedUsers = users.map((u) => u.name).join(' ');
 
+    const successMessage = messageGenerator({
+      ctx,
+      MR,
+      usersTags: formattedUsers,
+      taskNumber,
+    });
+
     if (!formattedUsers.length) {
       await ctx.reply(
-        `В базе нет id этих пачанов, Assignees - ${MR.assignees[0].name}, Reviewers - ${MR.reviewers[0].name} `,
-        // @ts-ignore
-        { disable_web_page_preview: true }
+        `В базе нет id этих пачанов, Assignees - ${MR.assignees[0].name}, Reviewers - ${MR.reviewers[0].name} `
       );
       return;
     }
@@ -49,17 +54,6 @@ export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 
     const isError = !idAssignees || !idReviewers;
-
-    const linkMR = `<b>МР:</b> ${ctx.message!.text?.slice(1)}\n\n`;
-    const title = MR.title ? `<b>Заголовок:</b> ${MR.title}\n\n` : '';
-    const taskLink = `<b>Задача:</b> https://itpm.mos.ru/browse/${taskNumber}\n\n`;
-    const description = MR.description
-      ? `<b>Описание:</b> ${
-          MR.description.length > 500
-            ? MR.description.slice(0, 500).trim() + '...'
-            : MR.description
-        }\n\n`
-      : '';
 
     const errorMsg = `
       ${
@@ -71,15 +65,7 @@ export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
       ${formattedUsers.length ? '' : 'Пользовтель не найдет с таким id Git lab'}
       `;
 
-    const successMsg = `МР от ${MR.author.name} @${
-      ctx.message!.from!.username
-    }\n
-${linkMR}${
-      taskNumber !== 'UNKNOWN' ? `${taskLink}` : ''
-    }${title}${description}${formattedUsers}   
-    `;
-
-    await ctx.reply(isError ? errorMsg : successMsg, {
+    await ctx.reply(isError ? errorMsg : successMessage, {
       disable_web_page_preview: true,
       parse_mode: 'HTML',
     } as any);

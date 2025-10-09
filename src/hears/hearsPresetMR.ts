@@ -2,7 +2,12 @@ import { ApiGitLab } from '../api/apiGitLab';
 import { findUsersByName } from '../db/helpers';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 import { MyContext } from '../type';
-import { taskService } from './helper';
+import {
+  fetchMR,
+  getTaskNumber,
+  messageGenerator,
+  taskService,
+} from './helper';
 
 export const hearsPresetMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
@@ -11,46 +16,28 @@ export const hearsPresetMR = async (ctx: MyContext) => {
       `@${ctx.message!.from!.username}`,
     ]);
 
-    // ====
-    const text = ctx.message!.text!;
-    const idMR = text.match(REGEX_MR_ID)![1];
-    const MR = await ApiGitLab.getMR(idMR);
+    const MR = await fetchMR(ctx);
 
     if (!MR) return;
-    const nameBranch = MR.source_branch;
 
-    const matchTask = nameBranch.match(REGEX_BRANCH_ID);
-    const taskNumber = matchTask?.[0] ?? 'UNKNOWN';
+    const taskNumber = getTaskNumber(MR);
+
+    const message = messageGenerator({
+      ctx,
+      MR,
+      usersTags: JSON.parse(dataAuthorMR.preset || '[]'),
+      taskNumber,
+    });
 
     if (dataAuthorMR && taskNumber) {
       taskService.recordTask(taskNumber, dataAuthorMR, ctx);
     }
-    // ===
-    const taskLink = `<b>Задача:</b> https://itpm.mos.ru/browse/${taskNumber}\n\n`;
 
     // TODO тут может падать при удалние сообещния
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 
-    const linkMR = `<b>МР:</b> ${ctx.message!.text?.slice(1)}\n\n`;
-    const title = MR.title ? `<b>Заголовок:</b> ${MR.title}\n\n` : '';
-
-    const description = MR.description
-      ? `<b>Описание:</b> ${
-          MR.description.length > 500
-            ? MR.description.slice(0, 500).trim() + '...'
-            : MR.description
-        }\n\n`
-      : '';
-
-    const msg = `МР от ${MR.author.name} @${ctx.message!.from!.username}\n
-${linkMR}${
-      taskNumber !== 'UNKNOWN' ? `${taskLink}` : ''
-    }${title}${description}${JSON.parse(dataAuthorMR.preset || '[]').join(
-      ', '
-    )}   
-   `;
     // @ts-ignore
-    await ctx.reply(msg, {
+    await ctx.reply(message, {
       disable_web_page_preview: true,
       parse_mode: 'HTML',
     } as any);
