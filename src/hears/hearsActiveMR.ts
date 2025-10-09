@@ -3,9 +3,7 @@ import { IUser } from '../db/db';
 import { getAllUsers } from '../db/helpers';
 import { MyContext } from '../type';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
-import { TaskService } from './helper';
-
-const taskService = new TaskService();
+import { taskService } from './helper';
 
 export const hearsActiveMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
@@ -20,7 +18,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
       .map((u) => (u.isActive ? u.name : undefined))
       .filter((el) => el !== undefined && el !== authorMR)
       .join(' ');
-
+    // ==
     const text = ctx.message!.text!;
     const idMR = text.match(REGEX_MR_ID)![1];
     const MR = await ApiGitLab.getMR(idMR);
@@ -35,6 +33,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
       taskService.recordTask(taskNumber, dataAuthorMR, ctx);
     }
 
+    // ===
     const taskLink = `<b>Задача:</b> https://itpm.mos.ru/browse/${taskNumber}\n\n`;
 
     // TODO тут может падать при удалние сообещния
@@ -52,10 +51,10 @@ export const hearsActiveMR = async (ctx: MyContext) => {
       : '';
 
     const msg = `МР от ${MR.author.name} @${ctx.message!.from!.username}\n
-${linkMR}${
+  ${linkMR}${
       taskNumber !== 'UNKNOWN' ? `${taskLink}` : ''
     }${title}${description}${formattedUsers}   
-	 `;
+    `;
     // @ts-ignore
     await ctx.reply(msg, {
       disable_web_page_preview: true,

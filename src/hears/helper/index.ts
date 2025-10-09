@@ -1,2 +1,2 @@
 export { fetchMR } from './helper';
-export { TaskService } from './TaskService';
+export { taskService } from './TaskService';

@@ -2,7 +2,7 @@ import { IUser, User } from '../../db/db';
 import { MyContext } from '../../type';
 import { CompletedTask } from '../type';
 
-export class TaskService {
+class TaskService {
   timeToCheck: number | null = null;
 
   constructor() {
@@ -110,3 +110,5 @@ export class TaskService {
     }
   };
 }
+
+export const taskService = new TaskService();
