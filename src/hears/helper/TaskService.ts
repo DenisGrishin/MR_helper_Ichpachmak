@@ -99,7 +99,7 @@ class TaskService {
       if (!taskNumber) throw new Error('Нет номара задачи');
 
       const updateCompletedTasks = JSON.stringify([
-        ...completedTasks,
+        ...(isNewDay ? [] : completedTasks),
         { taskNumber, dateTask: ctx.message?.date },
       ]);
 
