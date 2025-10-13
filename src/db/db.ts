@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users
 });
 
 // db.serialize(() => {
-//   db.run(`ALTER TABLE users ADD COLUMN task TEXT DEFAULT '[]'`);
+//   db.run(`ALTER TABLE users ADD COLUMN completedTasks TEXT DEFAULT '[]'`);
 // });
 
 export interface IUser {
@@ -27,6 +27,7 @@ export interface IUser {
   isActive: number;
   idGitLab: number | null;
   preset: string;
+  completedTasks: string;
 }
 
 export class User {
@@ -167,6 +168,48 @@ export class User {
     db.run(sql, [preset, id], function (err) {
       if (err) return cb(err);
       cb(null, { updated: this.changes });
+    });
+  }
+
+  static updateCompletedTasks(
+    id: number,
+    completedTasks: string,
+    cb: (err: Error | null, res?: { updated: number }) => void
+  ): void {
+    const sql = `
+    UPDATE users
+    SET completedTasks = ?
+    WHERE id = ?
+  `;
+
+    db.run(sql, [completedTasks, id], function (err) {
+      if (err) return cb(err);
+      cb(null, { updated: this.changes });
+    });
+  }
+
+  static deleteAllCompletedTasks(
+    cb: (err: Error | null, res?: { updated: number }) => void
+  ): void {
+    const sql = ` 
+    UPDATE users
+    SET completedTasks = '[]'
+  `;
+    // TODO узгать чем отличаеться run от all, get
+    db.run(sql, [], function (err) {
+      if (err) return cb(err);
+      cb(null, { updated: this.changes });
+    });
+  }
+
+  static getCompletedTasks() {
+    return new Promise<{ completedTasks: string }[]>((resolve, reject) => {
+      const sql = `SELECT completedTasks FROM users`;
+
+      db.all(sql, (err, rows: { completedTasks: string }[]) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
     });
   }
 

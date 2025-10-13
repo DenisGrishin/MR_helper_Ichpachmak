@@ -1,50 +1,51 @@
-import { Context } from 'grammy';
-import { ApiGitLab } from '../api/apiGitLab';
 import { findUsersByName } from '../db/helpers';
-import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
+import { MyContext } from '../type';
+import {
+  fetchMR,
+  getTaskNumber,
+  messageGenerator,
+  taskService,
+} from './helper';
 
-export const hearsPresetMR = async (ctx: Context) => {
+export const hearsPresetMR = async (ctx: MyContext) => {
+  // TODO сделать обработку на ошибку если нет мр или проблема с апи
   try {
-    const authorMsg = await findUsersByName([
+    const [dataAuthorMR] = await findUsersByName([
       `@${ctx.message!.from!.username}`,
     ]);
 
-    const text = ctx.message!.text!;
-    const idMR = text.match(REGEX_MR_ID)![1];
-    const MR = await ApiGitLab.getMR(idMR);
-    if (!MR) return;
-    const nameBranch = MR.source_branch;
-    const taskNumber = nameBranch.match(REGEX_BRANCH_ID)![0];
+    const preset = JSON.parse(dataAuthorMR.preset || '[]');
 
+    if (!preset.length) {
+      await ctx.reply(
+        'У вас ещё нет  пресета.\n\nВы можете создать его через команду /menu → «Обновить пресет»'
+      );
+      return;
+    }
+    const MR = await fetchMR(ctx);
+
+    if (!MR) return;
+
+    const taskNumber = getTaskNumber(MR);
+
+    const message = messageGenerator({
+      ctx,
+      MR,
+      usersTags: preset,
+      taskNumber,
+    });
+
+    if (dataAuthorMR && taskNumber) {
+      taskService.recordTask(taskNumber, dataAuthorMR, ctx);
+    }
+
+    // TODO тут может падать при удалние сообещния
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 
-    const linkMR = ctx.message!.text?.slice(1);
-    const title = MR.title ? `Заголовок: ${MR.title.slice(0, 50)}` : '';
-    const description = MR.description
-      ? `Описание: ${
-          MR.description.length > 500
-            ? `${MR.description.slice(0, 500)}...`
-            : MR.description
-        }`
-      : '';
-
-    const successMsg = `МР от ${MR.author.name} @${ctx.message!.from!.username}
-
-${linkMR}
-
-Задача:
-https://itpm.mos.ru/browse/${taskNumber}
-
-${title}
-
-${description} 
-
-${JSON.parse(authorMsg[0].preset || '[]').join(', ')}
-    `;
     // @ts-ignore
-    await ctx.reply(successMsg, {
+    await ctx.reply(message, {
       disable_web_page_preview: true,
-      parse_mode: 'MarkdownV2',
+      parse_mode: 'HTML',
     } as any);
   } catch (err) {
     console.error('❌ Не удалось удалить сообщение:', err);

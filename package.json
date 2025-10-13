@@ -4,15 +4,14 @@
   "description": "",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "nodemon --exec tsx src/main.js",
+    "dev": "nodemon --exec tsx src/main.ts",
     "build": "tsc",
-    "start:prod": "node dist/main.js"
+    "start:prod": "node dist/main.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@grammyjs/conversations": "^2.1.0",
     "@grammyjs/hydrate": "^1.6.0",
     "axios": "^1.11.0",
     "dotenv": "^17.0.1",
