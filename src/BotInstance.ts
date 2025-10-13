@@ -31,26 +31,10 @@ function initialState(): SessionData {
 }
 
 export class BotInstance {
-  private tokenGitLab: string | null = null;
-  private baseUrl: string | null = null;
-  private projectID: string | null = null;
   bot: Bot<MyContext>;
   commandDispatcherInstance;
 
-  constructor({
-    tokenGitLab,
-    baseUrl,
-    projectID,
-    bot,
-  }: {
-    tokenGitLab?: string | null;
-    baseUrl?: string | null;
-    projectID?: string | null;
-    bot: Bot<MyContext>;
-  }) {
-    // this.tokenGitLab = tokenGitLab;
-    // this.baseUrl = baseUrl;
-    // this.projectID = projectID;
+  constructor({ bot }: { bot: Bot<MyContext> }) {
     this.bot = bot;
 
     this.commandDispatcherInstance = new CommandDispatcher();
