@@ -76,25 +76,18 @@ export class BotInstance {
 
     // git.russpass.dev gitlab.com — дергаем всех кто isActive
     this.bot.hears(
-      process.env.IS_DOMIN_PROD === 'true'
-        ? /!!https:\/\/git.russpass.dev/
-        : /!!https:\/\/gitlab.com/,
+      new RegExp(`!!https://${process.env.BASE_URL}`),
       hearsActiveMR
     );
 
     // дергаем тех кого добавили в гит idAssignees idReviewers
     this.bot.hears(
-      process.env.IS_DOMIN_PROD === 'true'
-        ? /~https:\/\/git.russpass.dev/
-        : /~https:\/\/gitlab.com/,
+      new RegExp(`~https://${process.env.BASE_URL}`),
       hearsAssigneesReviewersMR
     );
-
     // дергаем по пресету
     this.bot.hears(
-      process.env.IS_DOMIN_PROD === 'true'
-        ? /!https:\/\/git.russpass.dev/
-        : /!https:\/\/gitlab.com/,
+      new RegExp(`!https://${process.env.BASE_URL}`),
       hearsPresetMR
     );
 

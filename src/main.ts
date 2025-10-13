@@ -14,7 +14,7 @@ new BotInstance({ bot: bot });
 
 async function startBot(): Promise<void> {
   try {
-    bot.start();
+    await bot.start();
     console.log('Bot started');
   } catch (error) {
     console.error('Error in startBot:', error);
@@ -22,3 +22,13 @@ async function startBot(): Promise<void> {
 }
 
 startBot();
+
+process.on('uncaughtException', (err) => {
+  console.error('❌ Необработанная ошибка:', err);
+  // Можно сделать безопасный перезапуск
+  setTimeout(() => startBot(), 5000);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Необработанное отклонение промиса:', reason);
+});
