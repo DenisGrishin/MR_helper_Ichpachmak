@@ -12,9 +12,7 @@ export const fetchMR = async (ctx: Context) => {
   return MR;
 };
 
-export const getTaskNumber = (MR: any) => {
-  const nameBranch = MR.source_branch;
-
+export const getTaskNumber = (nameBranch: string) => {
   const matchTask = nameBranch.match(REGEX_BRANCH_ID);
   const taskNumber = matchTask?.[0] ?? 'UNKNOWN';
 

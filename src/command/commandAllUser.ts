@@ -1,6 +1,5 @@
-import { Context } from 'grammy';
+import { IUser } from '../db';
 import { getAllUsers } from '../db/helpers';
-import { IUser } from '../db/db';
 import { TCallbackQueryContext } from '../type';
 
 export const commandAllUser = async (ctx: TCallbackQueryContext) => {

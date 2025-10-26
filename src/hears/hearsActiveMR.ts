@@ -1,5 +1,5 @@
-import { IUser } from '../db/db';
 import { getAllUsers } from '../db/helpers';
+import { IUser } from '../db/users';
 import { MyContext } from '../type';
 import {
   fetchMR,
@@ -8,6 +8,7 @@ import {
   taskService,
 } from './helper';
 
+// TODO вынести отдельно чтоб при старте сохрнять ативных пользватлей
 export const hearsActiveMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
 
@@ -26,7 +27,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
 
   if (!MR) return;
 
-  const taskNumber = getTaskNumber(MR);
+  const taskNumber = getTaskNumber(MR.source_branch);
 
   const message = messageGenerator({
     ctx,
@@ -39,7 +40,11 @@ export const hearsActiveMR = async (ctx: MyContext) => {
   await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 
   if (dataAuthorMR && taskNumber) {
-    taskService.recordTask(taskNumber, dataAuthorMR, ctx);
+    await taskService.recordCompletedTask(taskNumber, dataAuthorMR, ctx);
+    await taskService.recordTask(
+      taskNumber === 'UNKNOWN' ? 'UNKNOWN' : MR.source_branch,
+      dataAuthorMR.id
+    );
   }
 
   try {

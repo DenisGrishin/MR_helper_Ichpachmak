@@ -6,7 +6,7 @@ import {
 import { TCallbackQueryContext } from '../type';
 import { findUsersByName, getAllUsers } from '../db/helpers';
 import { KeyCommand } from './constant';
-import { User } from '../db/db';
+import { Users } from '../db';
 
 export const commandUpdatePreset = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
@@ -48,7 +48,7 @@ export const deletePreset = async (ctx: TCallbackQueryContext) => {
   const authorName = ctx.from.username;
   const user = await findUsersByName([`@${authorName}`]);
 
-  User.updatePreset(Number(user[0].id), JSON.stringify([]), (err) => {
+  Users.updatePreset(Number(user[0].id), JSON.stringify([]), (err) => {
     if (err) console.error(err);
   });
 };
@@ -69,7 +69,7 @@ export const commandButtonPreset = async (ctx: TCallbackQueryContext) => {
     ? presetList.filter((name: string) => name !== nameSlug)
     : [...presetList, nameSlug];
 
-  User.updatePreset(
+  Users.updatePreset(
     Number(user[0].id),
     JSON.stringify(updateListPreset),
     (err) => {

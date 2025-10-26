@@ -12,12 +12,15 @@ export enum KeyCommand {
   deletePreset = 'delete_preset',
   backToMenu = 'back_to_menu',
   completedTasks = 'completed_tasks',
+  createTasksList = 'create_task_list',
 }
 
 export const TEXT_COMMAND: Record<string, string> = {
   [`${KeyCommand.set}`]:
     'Укажите теги идентификаторы пользователей, которых необходимо добавить в систему.',
   [`${KeyCommand.setIdGitLab}`]: 'Укажите id пользователя GitLab.',
+  [`${KeyCommand.createTasksList}`]:
+    'Отправьте список веток, чтоб сформировать список задач',
 };
 
 export const LIST_MY_COMMAND = [
@@ -30,5 +33,9 @@ export const LIST_MY_COMMAND = [
   {
     command: KeyCommand.completedTasks,
     description: 'Посмотреть список выполененых задач',
+  },
+  {
+    command: KeyCommand.createTasksList,
+    description: 'Создать список задач',
   },
 ];

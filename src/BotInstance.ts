@@ -170,6 +170,10 @@ export class BotInstance {
       await ctx.reply('Выбирете пункт', { reply_markup: keyboardMenu });
     });
 
+    this.bot.command([KeyCommand.createTasksList], async (ctx: MyContext) =>
+      handleCommand(ctx, KeyCommand.createTasksList)
+    );
+
     //============================================================
     // обработка сообщений после команд /
     //============================================================
@@ -182,6 +186,9 @@ export class BotInstance {
           break;
         case KeyCommand.setIdGitLab:
           this.commandDispatcherInstance.setIdGitLab(ctx);
+          break;
+        case KeyCommand.createTasksList:
+          this.commandDispatcherInstance.createTasksList(ctx);
           break;
       }
       ctx.session.keyCommand = null;

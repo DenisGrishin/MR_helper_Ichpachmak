@@ -22,13 +22,3 @@ async function startBot(): Promise<void> {
 }
 
 startBot();
-
-process.on('uncaughtException', (err) => {
-  console.error('❌ Необработанная ошибка:', err);
-  // Можно сделать безопасный перезапуск
-  setTimeout(() => startBot(), 5000);
-});
-
-process.on('unhandledRejection', (reason) => {
-  console.error('❌ Необработанное отклонение промиса:', reason);
-});

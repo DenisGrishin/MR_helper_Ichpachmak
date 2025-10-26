@@ -5,7 +5,7 @@ import {
 } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
 import { findUserById, getAllUsers } from '../db/helpers';
-import { User } from '../db/db';
+import { Users } from '../db';
 import { KeyCommand } from './constant';
 
 export const commandDeleteUser = async (ctx: TCallbackQueryContext) => {
@@ -43,7 +43,6 @@ export const commandButtonDeleteUser = async (ctx: TCallbackQueryContext) => {
 export const deleteUser = async (id: number) => {
   if (!id) throw new Error('Нет такого id');
 
-  User.delete(id, (err) => {
-    if (err) console.error(err);
-  });
+  await Users.delete(id, 'tasksUsers');
+  await Users.delete(id, 'users');
 };

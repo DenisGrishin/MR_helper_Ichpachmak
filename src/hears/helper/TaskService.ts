@@ -1,4 +1,4 @@
-import { IUser, User } from '../../db/db';
+import { IUser, TasksUsers, Users } from '../../db';
 import { MyContext } from '../../type';
 import { CompletedTask } from '../type';
 
@@ -21,16 +21,6 @@ class TaskService {
         this.timeToCheck = oneCompletedTask[0].dateTask;
       }
     }
-  };
-
-  validateRepeatCompletedTasks = ({
-    completedTasks,
-    taskNumber,
-  }: {
-    completedTasks: CompletedTask[];
-    taskNumber: string;
-  }) => {
-    return completedTasks.some((task) => task.taskNumber === taskNumber);
   };
 
   createTimeToCheck = () => {
@@ -58,7 +48,7 @@ class TaskService {
   };
 
   getOneCompletedTask = async () => {
-    const allCompletedTasks = await User.getCompletedTasks();
+    const allCompletedTasks = await Users.getCompletedTasks();
 
     let completedTask = null;
 
@@ -75,13 +65,12 @@ class TaskService {
     return completedTask;
   };
 
-  recordTask = async (taskNumber: string, authorMR: IUser, ctx: MyContext) => {
+  recordCompletedTask = async (
+    taskNumber: string,
+    authorMR: IUser,
+    ctx: MyContext
+  ) => {
     const completedTasks = JSON.parse(authorMR.completedTasks);
-
-    const isRepeatCompletedTask = this.validateRepeatCompletedTasks({
-      completedTasks,
-      taskNumber,
-    });
 
     const isNewDay = this.hasDayChanged({
       dateMsg: ctx.msg?.date,
@@ -89,11 +78,17 @@ class TaskService {
     });
 
     if (isNewDay) {
-      User.deleteAllCompletedTasks(() => {});
+      Users.deleteAllCompletedTasks(() => {});
       this.createTimeToCheck();
     }
 
-    if (isRepeatCompletedTask) return;
+    if (
+      completedTasks.some(
+        (task: CompletedTask) => task.taskNumber === taskNumber
+      )
+    ) {
+      return;
+    }
 
     try {
       if (!taskNumber) throw new Error('Нет номара задачи');
@@ -104,10 +99,26 @@ class TaskService {
       ]);
 
       // TODO тут дописать третий аругемент
-      User.updateCompletedTasks(authorMR.id, updateCompletedTasks, () => {});
+      Users.updateCompletedTasks(authorMR.id, updateCompletedTasks, () => {});
     } catch (error) {
       console.error(error);
     }
+  };
+
+  recordTask = async (currentTask: string, idAuthor: number) => {
+    console.log('idAuthor ==> ', idAuthor);
+    const tasksUser = await TasksUsers.findUserById(idAuthor);
+    console.log('tasksUser ==> ', tasksUser);
+    const tasks = JSON.parse(tasksUser.completedTasks) || [];
+
+    if (currentTask === 'UNKNOWN') return;
+
+    if (tasks.some((task: string) => task === currentTask)) return;
+
+    const updatedUsersTasks = JSON.stringify([...tasks, currentTask]);
+    console.log('updatedUsersTasks ==> ', updatedUsersTasks);
+
+    TasksUsers.updateCompletedTasks(idAuthor, updatedUsersTasks, () => {});
   };
 }
 

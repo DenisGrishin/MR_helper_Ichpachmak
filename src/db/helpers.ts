@@ -1,8 +1,8 @@
-import { User, IUser } from './db';
+import { IUser, Users } from './users';
 
 export function getAllUsers(): Promise<IUser[]> {
   try {
-    const res = User.all();
+    const res = Users.all('users');
 
     return res;
   } catch (error) {
@@ -13,7 +13,7 @@ export function getAllUsers(): Promise<IUser[]> {
 
 export const findUsersByName = async (values: string[]): Promise<IUser[]> => {
   try {
-    const res = await User.findUsersByName(values);
+    const res = await Users.findUsersByName(values);
 
     return res;
   } catch (error) {
@@ -24,7 +24,7 @@ export const findUsersByName = async (values: string[]): Promise<IUser[]> => {
 
 export const findUserById = async (id: number): Promise<IUser | undefined> => {
   try {
-    const res = await User.findUserById(id);
+    const res = await Users.findUserById(id);
 
     return res;
   } catch (error) {
@@ -45,7 +45,7 @@ export async function getNamesBd(users?: string[]) {
 
 export function findUsersByIdGitlab(idGitLab: number[]) {
   try {
-    const res = User.findByIdGitLabs(idGitLab);
+    const res = Users.findByIdGitLabs(idGitLab);
 
     return res;
   } catch (error) {

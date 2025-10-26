@@ -1,5 +1,5 @@
 import { InlineKeyboard } from 'grammy';
-import { IUser } from '../db/db';
+import { TCallbackQueryContext } from '../type';
 import { KeyCommand } from '../command/constant';
 
 export const keyboardMenu = new InlineKeyboard()

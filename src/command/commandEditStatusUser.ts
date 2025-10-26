@@ -2,7 +2,7 @@ import { InlineKeyboard } from 'grammy';
 import { chunkInlineKeyboardUser } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
 import { findUserById, getAllUsers } from '../db/helpers';
-import { User } from '../db/db';
+import { Users } from '../db';
 
 export const commandEditStatusUser = async (ctx: TCallbackQueryContext) => {
   const listUsers = await getAllUsers();
@@ -27,7 +27,7 @@ export const commandButtonEditUser = async (ctx: TCallbackQueryContext) => {
 
   const statusIsActive = !user?.isActive ? 1 : 0;
 
-  User.update(id, statusIsActive, (err) => {
+  Users.update(id, statusIsActive, (err) => {
     if (err) console.error(err);
   });
 

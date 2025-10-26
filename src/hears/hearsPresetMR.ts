@@ -26,7 +26,7 @@ export const hearsPresetMR = async (ctx: MyContext) => {
 
     if (!MR) return;
 
-    const taskNumber = getTaskNumber(MR);
+    const taskNumber = getTaskNumber(MR.source_branch);
 
     const message = messageGenerator({
       ctx,
@@ -36,7 +36,7 @@ export const hearsPresetMR = async (ctx: MyContext) => {
     });
 
     if (dataAuthorMR && taskNumber) {
-      taskService.recordTask(taskNumber, dataAuthorMR, ctx);
+      taskService.recordCompletedTask(taskNumber, dataAuthorMR, ctx);
     }
 
     // TODO тут может падать при удалние сообещния

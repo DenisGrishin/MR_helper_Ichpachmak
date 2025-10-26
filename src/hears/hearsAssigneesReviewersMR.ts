@@ -1,8 +1,6 @@
-import { ApiGitLab } from '../api/apiGitLab';
-import { IUser } from '../db/db';
+import { IUser } from '../db';
 import { findUsersByIdGitlab, findUsersByName } from '../db/helpers';
 import { MyContext } from '../type';
-import { REGEX_BRANCH_ID, REGEX_MR_ID } from './constant';
 import {
   fetchMR,
   getTaskNumber,
@@ -22,10 +20,10 @@ export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
 
     if (!MR) return;
 
-    const taskNumber = getTaskNumber(MR);
+    const taskNumber = getTaskNumber(MR.source_branch);
 
     if (dataAuthorMR && taskNumber) {
-      taskService.recordTask(taskNumber, dataAuthorMR, ctx);
+      taskService.recordCompletedTask(taskNumber, dataAuthorMR, ctx);
     }
     // ====
     const idAssignees = MR.assignees[0]?.id ?? 0;

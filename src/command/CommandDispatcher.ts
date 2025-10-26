@@ -1,9 +1,11 @@
-import { User } from '../db/db';
+import { ITasksUsers, Users } from '../db';
 import { getNamesBd, findUsersByName } from '../db/helpers';
 import type { Context } from 'grammy';
+import { getTaskNumber } from '../hears/helper';
 
 const TEXT_MSG_1 = 'Эти(-от) пользователи(-ль)';
-
+const TEXT_MSG_2 =
+  'Обновил тест-площадку, проверьте свои задачи и переведите в "готово к тестированию" + поменяйте исполнителя задачи на QA, если все ок';
 interface IMessageBotArgs {
   messageId: number;
   successValue: string[];
@@ -24,7 +26,11 @@ export class CommandDispatcher {
 
     const { notFindUsersDb, usersNameBd } = await getNamesBd(msgUserNames);
 
-    User.create(notFindUsersDb, (err) => {
+    Users.create(notFindUsersDb, 'tasksUsers', (err) => {
+      if (err) return;
+    });
+
+    Users.create(notFindUsersDb, 'users', (err) => {
       if (err) return;
     });
 
@@ -62,7 +68,7 @@ export class CommandDispatcher {
 
     const { id } = users[0];
 
-    User.updateGitLabId(id, Number(msgGitId), (err) => {
+    Users.updateGitLabId(id, Number(msgGitId), (err) => {
       if (err) console.error(err);
     });
 
@@ -101,6 +107,28 @@ export class CommandDispatcher {
 
     await ctx.reply(`${messageSuccessNameDb}\n\n${messageWarningNameDb}`, {
       reply_parameters: { message_id: messageId },
+    });
+  }
+
+  async createTasksList(ctx: Context) {
+    const msgListTasks = ctx.message?.text?.split('\n');
+    const allTasks = await Users.all('tasksUsers');
+
+    const msgList = allTasks?.reduce((acc, curr: ITasksUsers) => {
+      const listCompletedTasks = JSON.parse(curr.completedTasks);
+
+      const filterList = listCompletedTasks
+        .filter((el: string) => msgListTasks?.includes(el))
+        .map((el: string) => `https://itpm.mos.ru/browse/${getTaskNumber(el)}`);
+
+      const string = `${curr.name}\n${filterList.join('\n')}
+      `;
+
+      return acc + '\n' + string;
+    }, '');
+
+    await ctx.reply(TEXT_MSG_2 + '\n' + msgList, {
+      reply_parameters: { message_id: ctx.msg!.message_id },
     });
   }
 }
