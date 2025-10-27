@@ -1,4 +1,4 @@
-import { IUser, TasksUsers, Users } from '../../db';
+import { findUserById, IUser, Users } from '../../db';
 import { MyContext } from '../../type';
 import { CompletedTask } from '../type';
 
@@ -99,16 +99,22 @@ class TaskService {
       ]);
 
       // TODO тут дописать третий аругемент
-      Users.updateCompletedTasks(authorMR.id, updateCompletedTasks, () => {});
+      Users.updateCompletedTasks(
+        authorMR.id,
+        updateCompletedTasks,
+        'users',
+        () => {}
+      );
     } catch (error) {
       console.error(error);
     }
   };
 
   recordTask = async (currentTask: string, idAuthor: number) => {
-    console.log('idAuthor ==> ', idAuthor);
-    const tasksUser = await TasksUsers.findUserById(idAuthor);
-    console.log('tasksUser ==> ', tasksUser);
+    const tasksUser = await findUserById(idAuthor, 'tasksUsers');
+
+    if (!tasksUser) throw new Error('Не нашли пользвателя');
+
     const tasks = JSON.parse(tasksUser.completedTasks) || [];
 
     if (currentTask === 'UNKNOWN') return;
@@ -116,9 +122,13 @@ class TaskService {
     if (tasks.some((task: string) => task === currentTask)) return;
 
     const updatedUsersTasks = JSON.stringify([...tasks, currentTask]);
-    console.log('updatedUsersTasks ==> ', updatedUsersTasks);
 
-    TasksUsers.updateCompletedTasks(idAuthor, updatedUsersTasks, () => {});
+    Users.updateCompletedTasks(
+      idAuthor,
+      updatedUsersTasks,
+      'tasksUsers',
+      () => {}
+    );
   };
 }
 

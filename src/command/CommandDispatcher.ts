@@ -113,22 +113,63 @@ export class CommandDispatcher {
   async createTasksList(ctx: Context) {
     const msgListTasks = ctx.message?.text?.split('\n');
     const allTasks = await Users.all('tasksUsers');
+    const objFiltreListTask: Record<string, string[]> = {};
 
-    const msgList = allTasks?.reduce((acc, curr: ITasksUsers) => {
+    const msgTasksList = allTasks?.reduce((acc, curr: ITasksUsers) => {
       const listCompletedTasks = JSON.parse(curr.completedTasks);
 
-      const filterList = listCompletedTasks
-        .filter((el: string) => msgListTasks?.includes(el))
-        .map((el: string) => `https://itpm.mos.ru/browse/${getTaskNumber(el)}`);
+      if (!listCompletedTasks.length) {
+        return acc + '';
+      }
 
-      const string = `${curr.name}\n${filterList.join('\n')}
+      const filterList = listCompletedTasks.filter((el: string) =>
+        msgListTasks?.includes(el)
+      );
+
+      const createListLinkTask = filterList.map(
+        (el: string) => `https://itpm.mos.ru/browse/${getTaskNumber(el)}`
+      );
+
+      const string = `${curr.name}\n${createListLinkTask.join('\n')}
       `;
+
+      if (!createListLinkTask.length) {
+        return acc + '';
+      }
+
+      objFiltreListTask[curr.name] = filterList;
 
       return acc + '\n' + string;
     }, '');
 
-    await ctx.reply(TEXT_MSG_2 + '\n' + msgList, {
+    await ctx.reply(TEXT_MSG_2 + '\n' + msgTasksList, {
       reply_parameters: { message_id: ctx.msg!.message_id },
+    });
+
+    const updateTask = Object.entries(objFiltreListTask).reduce(
+      (acc, [key, value]) => {
+        const user = allTasks.find((el) => el.name === key);
+
+        if (user) {
+          const listCompletedTasks = JSON.parse(user.completedTasks);
+
+          const updateListTask = listCompletedTasks.filter(
+            (task: string) => !value?.includes(task)
+          );
+
+          acc.push({
+            id: user.id,
+            name: key,
+            completedTasks: JSON.stringify(updateListTask),
+          });
+        }
+        return acc;
+      },
+      [] as Array<{ id: number; name: string; completedTasks: string }>
+    );
+
+    updateTask.forEach((el) => {
+      Users.updateMultipleTasksUsers(el.completedTasks, el.id, () => {});
     });
   }
 }

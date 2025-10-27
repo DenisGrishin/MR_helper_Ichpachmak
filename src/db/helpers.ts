@@ -1,4 +1,4 @@
-import { IUser, Users } from './users';
+import { IUser, NameTableBD, Users } from './users';
 
 export function getAllUsers(): Promise<IUser[]> {
   try {
@@ -22,9 +22,12 @@ export const findUsersByName = async (values: string[]): Promise<IUser[]> => {
   }
 };
 
-export const findUserById = async (id: number): Promise<IUser | undefined> => {
+export const findUserById = async (
+  id: number,
+  nameTable: NameTableBD
+): Promise<IUser | undefined> => {
   try {
-    const res = await Users.findUserById(id);
+    const res = await Users.findUserById(id, nameTable);
 
     return res;
   } catch (error) {

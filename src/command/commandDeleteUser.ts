@@ -27,7 +27,7 @@ export const commandDeleteUser = async (ctx: TCallbackQueryContext) => {
 export const commandButtonDeleteUser = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
   const id = Number(ctx.callbackQuery.data.split('-')[1]);
-  const user = await findUserById(id);
+  const user = await findUserById(id, 'users');
 
   ctx.session.keyCommand = KeyCommand.delete;
   ctx.session.userId = Number(user?.id);

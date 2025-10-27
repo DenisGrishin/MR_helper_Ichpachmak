@@ -12,7 +12,7 @@ export enum KeyCommand {
   deletePreset = 'delete_preset',
   backToMenu = 'back_to_menu',
   completedTasks = 'completed_tasks',
-  createTasksList = 'create_task_list',
+  createTasksList = 'qwe',
 }
 
 export const TEXT_COMMAND: Record<string, string> = {

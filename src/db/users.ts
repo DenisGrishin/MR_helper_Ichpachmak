@@ -9,6 +9,13 @@ export interface IUser {
   completedTasks: string;
 }
 
+export interface ITasksUsers {
+  id: number;
+  name: string;
+  completedTasks: string;
+}
+
+// таблицы в БД
 export type NameTableBD = 'users' | 'tasksUsers';
 
 export class Users {
@@ -54,13 +61,13 @@ export class Users {
     });
   }
 
-  static findUserById(id: number): Promise<IUser> {
+  static findUserById(id: number, nameTable: NameTableBD): Promise<IUser> {
     return new Promise((resolve, reject) => {
       if (!id) {
         return reject(new Error('ID не передан'));
       }
 
-      const sql = `SELECT * FROM users WHERE id = ?`;
+      const sql = `SELECT * FROM ${nameTable} WHERE id = ?`;
 
       db.get(sql, id, (err, row: IUser) => {
         if (err) return reject(err);
@@ -156,10 +163,11 @@ export class Users {
   static updateCompletedTasks(
     id: number,
     completedTasks: string,
+    nameTable: NameTableBD,
     cb: (err: Error | null, res?: { updated: number }) => void
   ): void {
     const sql = `
-	 UPDATE users
+	 UPDATE ${nameTable}
 	 SET completedTasks = ?
 	 WHERE id = ?
   `;
@@ -202,6 +210,24 @@ export class Users {
         if (err) return reject(err);
         resolve();
       });
+    });
+  }
+
+  // TODO переписать это хуйню
+  static updateMultipleTasksUsers(
+    completedTasks: string,
+    id: number,
+    cb: (err: Error | null, res?: { updated: number }) => void
+  ) {
+    const sql = `
+	 UPDATE tasksUsers
+	 SET completedTasks = ?
+	 WHERE id = ?
+  `;
+
+    db.run(sql, [completedTasks, id], function (err) {
+      if (err) return cb(err);
+      cb(null, { updated: this.changes });
     });
   }
 }

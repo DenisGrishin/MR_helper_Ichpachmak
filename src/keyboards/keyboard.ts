@@ -1,6 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 import { TCallbackQueryContext } from '../type';
 import { KeyCommand } from '../command/constant';
+import { IUser } from '../db';
 
 export const keyboardMenu = new InlineKeyboard()
   .text('Активировать пользователя', KeyCommand.editStatusUser)

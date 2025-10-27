@@ -23,7 +23,7 @@ export const commandEditStatusUser = async (ctx: TCallbackQueryContext) => {
 export const commandButtonEditUser = async (ctx: TCallbackQueryContext) => {
   const id = Number(ctx.callbackQuery.data.split('-')[1]);
   ctx.answerCallbackQuery();
-  const user = await findUserById(id);
+  const user = await findUserById(id, 'users');
 
   const statusIsActive = !user?.isActive ? 1 : 0;
 
