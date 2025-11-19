@@ -1,6 +1,6 @@
-import 'dotenv/config';
-import { Bot, GrammyError, HttpError, session } from 'grammy';
-import { hydrate } from '@grammyjs/hydrate';
+import "dotenv/config";
+import { Bot, GrammyError, HttpError, session } from "grammy";
+import { hydrate } from "@grammyjs/hydrate";
 import {
   handleCommand,
   commandAllUser,
@@ -15,16 +15,16 @@ import {
   commandButtonPreset,
   CommandDispatcher,
   commandCompletedTasks,
-} from './command';
-import { KeyCommand, LIST_MY_COMMAND } from './command/constant';
+} from "./command";
+import { KeyCommand, LIST_MY_COMMAND } from "./command/constant";
 import {
   hearsAssigneesReviewersMR,
   hearsPresetMR,
   hearsActiveMR,
   hearsDelMsgBot,
-} from './hears';
-import { MyContext, SessionData } from './type';
-import { keyboardMenu } from './keyboards/keyboard';
+} from "./hears";
+import { MyContext, SessionData } from "./type";
+import { keyboardMenu } from "./keyboards/keyboard";
 
 function initialState(): SessionData {
   return { keyCommand: null, userId: null };
@@ -61,21 +61,21 @@ export class BotInstance {
     // git.russpass.dev gitlab.com — дергаем всех кто isActive
     this.bot.hears(
       new RegExp(`!!https://${process.env.BASE_URL}`),
-      hearsActiveMR
+      hearsActiveMR,
     );
 
     // дергаем тех кого добавили в гит idAssignees idReviewers
     this.bot.hears(
       new RegExp(`~https://${process.env.BASE_URL}`),
-      hearsAssigneesReviewersMR
+      hearsAssigneesReviewersMR,
     );
     // дергаем по пресету
     this.bot.hears(
       new RegExp(`!https://${process.env.BASE_URL}`),
-      hearsPresetMR
+      hearsPresetMR,
     );
 
-    this.bot.hears('del-msg-bot', hearsDelMsgBot);
+    this.bot.hears("del-msg-bot", hearsDelMsgBot);
   }
 
   initInteractiveMenu() {
@@ -106,7 +106,7 @@ export class BotInstance {
           break;
         default:
           console.error(
-            `Комманда была не назначина в callbackQuery ${KeyCommand.yesAnswer}`
+            `Комманда была не назначина в callbackQuery ${KeyCommand.yesAnswer}`,
           );
           break;
       }
@@ -126,7 +126,7 @@ export class BotInstance {
 
         default:
           console.error(
-            `Комманда была не назначина в callbackQuery ${KeyCommand.noAnswer}`
+            `Комманда была не назначина в callbackQuery ${KeyCommand.noAnswer}`,
           );
           break;
       }
@@ -142,7 +142,7 @@ export class BotInstance {
     this.bot.callbackQuery(/^preset-@*/, commandButtonPreset);
 
     this.bot.callbackQuery(KeyCommand.backToMenu, async (ctx) => {
-      ctx.callbackQuery.message?.editText('Выбирете пункт меню', {
+      ctx.callbackQuery.message?.editText("Выбирете пункт меню", {
         reply_markup: keyboardMenu,
       });
       ctx.answerCallbackQuery();
@@ -155,30 +155,36 @@ export class BotInstance {
     //============================================================
 
     this.bot.command([KeyCommand.set], (ctx: MyContext) =>
-      handleCommand(ctx, KeyCommand.set)
+      handleCommand(ctx, KeyCommand.set),
     );
 
     this.bot.command([KeyCommand.setIdGitLab], async (ctx: MyContext) =>
-      handleCommand(ctx, KeyCommand.setIdGitLab)
+      handleCommand(ctx, KeyCommand.setIdGitLab),
     );
 
     this.bot.command([KeyCommand.completedTasks], async (ctx: MyContext) =>
-      commandCompletedTasks(ctx)
+      commandCompletedTasks(ctx),
     );
 
     this.bot.command([KeyCommand.menu], async (ctx: MyContext) => {
-      await ctx.reply('Выбирете пункт', { reply_markup: keyboardMenu });
+      await ctx.reply("Выбирете пункт", { reply_markup: keyboardMenu });
     });
 
-    this.bot.command([KeyCommand.createTasksList], async (ctx: MyContext) =>
-      handleCommand(ctx, KeyCommand.createTasksList)
+    this.bot.command([KeyCommand.createTasksListTEST], async (ctx: MyContext) =>
+      handleCommand(ctx, KeyCommand.createTasksListTEST),
+    );
+
+    this.bot.command(
+      [KeyCommand.createTasksListSTAGE],
+      async (ctx: MyContext) =>
+        handleCommand(ctx, KeyCommand.createTasksListSTAGE),
     );
 
     //============================================================
     // обработка сообщений после команд /
     //============================================================
 
-    this.bot.on('message', async (ctx: MyContext) => {
+    this.bot.on("message", async (ctx: MyContext) => {
       if (!ctx.session.keyCommand) return;
       switch (ctx.session.keyCommand) {
         case KeyCommand.set:
@@ -187,8 +193,11 @@ export class BotInstance {
         case KeyCommand.setIdGitLab:
           this.commandDispatcherInstance.setIdGitLab(ctx);
           break;
-        case KeyCommand.createTasksList:
-          this.commandDispatcherInstance.createTasksList(ctx);
+        case KeyCommand.createTasksListTEST:
+          this.commandDispatcherInstance.createTasksList(ctx, "test");
+          break;
+        case KeyCommand.createTasksListSTAGE:
+          this.commandDispatcherInstance.createTasksList(ctx, "stage");
           break;
       }
       ctx.session.keyCommand = null;
@@ -207,21 +216,21 @@ export class BotInstance {
 
       if (ctx && ctx.reply) {
         try {
-          await ctx.reply('Извините, произошла ошибка. Попробуйте позже.');
+          await ctx.reply("Извините, произошла ошибка. Попробуйте позже.");
         } catch (replyError) {
           console.error(
-            'Не удалось отправить сообщение об ошибке:',
-            replyError
+            "Не удалось отправить сообщение об ошибке:",
+            replyError,
           );
         }
       }
 
       if (e instanceof GrammyError) {
-        console.error('Ошибка в запросе:', e.description);
+        console.error("Ошибка в запросе:", e.description);
       } else if (e instanceof HttpError) {
-        console.error('Не удалось связаться с Telegram:', e);
+        console.error("Не удалось связаться с Telegram:", e);
       } else {
-        console.error('Неизвестная ошибка:', e);
+        console.error("Неизвестная ошибка:", e);
       }
     });
   }

@@ -4,8 +4,11 @@ import type { Context } from 'grammy';
 import { getTaskNumber } from '../hears/helper';
 
 const TEXT_MSG_1 = 'Эти(-от) пользователи(-ль)';
-const TEXT_MSG_2 =
-  'Обновил тест-площадку, проверьте свои задачи и переведите в "готово к тестированию" + поменяйте исполнителя задачи на QA, если все ок';
+const TEXT_MSG_TEST =
+  'Обновил  🟨TEST-площадку, проверьте свои задачи и переведите в "готово к тестированию" + поменяйте исполнителя задачи на QA, если все ок';
+const TEXT_MSG_STAGE =
+  'Обновил 🟩STAGE-площадку, проверьте свои задачи и переведите в "готово к тестированию" + поменяйте исполнителя задачи на QA, если все ок';
+
 interface IMessageBotArgs {
   messageId: number;
   successValue: string[];
@@ -110,7 +113,8 @@ export class CommandDispatcher {
     });
   }
 
-  async createTasksList(ctx: Context) {
+  async createTasksList(ctx: Context, kontur: 'test' | 'stage') {
+    console.log(kontur);
     const msgListTasks = ctx.message?.text?.split('\n');
     const allTasks = await Users.all('tasksUsers');
     const objFiltreListTask: Record<string, string[]> = {};
@@ -142,7 +146,9 @@ export class CommandDispatcher {
       return acc + '\n' + string;
     }, '');
 
-    await ctx.reply(TEXT_MSG_2 + '\n' + msgTasksList, {
+    const konturText = kontur === 'test' ? TEXT_MSG_TEST : TEXT_MSG_STAGE;
+
+    await ctx.reply(konturText + '\n' + msgTasksList, {
       reply_parameters: { message_id: ctx.msg!.message_id },
     });
 

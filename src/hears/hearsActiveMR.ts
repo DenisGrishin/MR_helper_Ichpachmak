@@ -1,12 +1,12 @@
-import { getAllUsers } from '../db/helpers';
-import { IUser } from '../db/users';
-import { MyContext } from '../type';
+import { getAllUsers } from "../db/helpers";
+import { IUser } from "../db/users";
+import { MyContext } from "../type";
 import {
   fetchMR,
   getTaskNumber,
   messageGenerator,
   taskService,
-} from './helper';
+} from "./helper";
 
 // TODO вынести отдельно чтоб при старте сохрнять ативных пользватлей
 export const hearsActiveMR = async (ctx: MyContext) => {
@@ -21,7 +21,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
   const formattedUsers = users
     .map((u) => (u.isActive ? u.name : undefined))
     .filter((el) => el !== undefined && el !== authorMR)
-    .join(' ');
+    .join(" ");
 
   const MR = await fetchMR(ctx);
 
@@ -42,8 +42,8 @@ export const hearsActiveMR = async (ctx: MyContext) => {
   if (dataAuthorMR && taskNumber) {
     await taskService.recordCompletedTask(taskNumber, dataAuthorMR, ctx);
     await taskService.recordTask(
-      taskNumber === 'UNKNOWN' ? 'UNKNOWN' : MR.source_branch,
-      dataAuthorMR.id
+      taskNumber === "UNKNOWN" ? "UNKNOWN" : MR.source_branch,
+      dataAuthorMR.id,
     );
   }
 
@@ -51,9 +51,9 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     // @ts-ignore
     await ctx.reply(message, {
       disable_web_page_preview: true,
-      parse_mode: 'HTML',
+      parse_mode: "HTML",
     } as any);
   } catch (err) {
-    console.error('❌ Не удалось удалить сообщение:', err);
+    console.error("❌ Не удалось удалить сообщение:", err);
   }
 };
