@@ -266,6 +266,13 @@ export class BotInstance {
       handleCommand(ctx, KeyCommand.createTasksListTEST),
     );
 
+    this.bot.command(KeyCommand.showIdChat, async (ctx: MyContext) => {
+      console.log('ctx.chat? ==> ', ctx.chat);
+      await ctx.reply(`ID чата:\n<pre>${ctx.chat?.id}</pre>`, {
+        parse_mode: 'HTML',
+      });
+    });
+
     this.bot.command(
       [KeyCommand.createTasksListSTAGE],
       async (ctx: MyContext) =>

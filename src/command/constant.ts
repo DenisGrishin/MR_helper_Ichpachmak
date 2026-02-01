@@ -16,6 +16,7 @@ export enum KeyCommand {
   addTokenGitLab = 'add_token_git_lab',
   createTasksListTEST = 'qwe',
   createTasksListSTAGE = 'qwes',
+  showIdChat = 'show_id_chat',
 }
 
 export const TEXT_COMMAND: Record<string, string> = {
@@ -46,5 +47,9 @@ export const LIST_MY_COMMAND = [
   {
     command: KeyCommand.createTasksListSTAGE,
     description: 'Создать список задач STAGE',
+  },
+  {
+    command: KeyCommand.showIdChat,
+    description: 'Посмотреть id',
   },
 ];
