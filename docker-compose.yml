@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mr-helper-bot
+    restart: unless-stopped
+    environment:
+      - BOT_API_KEY=${BOT_API_KEY}
+      - DB_DIR=/app/data
+    env_file:
+      - .env
+    ports:
+      - '6456:6456'
+    volumes:
+      # Монтируем директорию для сохранения базы данных SQLite
+      - ./data:/app/data

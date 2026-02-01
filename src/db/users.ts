@@ -7,6 +7,7 @@ export interface IUser {
   idGitLab: number | null;
   preset: string;
   completedTasks: string;
+  chatIds: string;
 }
 
 export interface ITasksUsers {
@@ -31,7 +32,7 @@ export class Users {
   static findUsers(
     list: string[],
     keySearch: 'id' | 'name',
-    cb: (err: Error | null, users?: IUser[]) => void
+    cb: (err: Error | null, users?: IUser[]) => void,
   ): void {
     if (list.length === 0) {
       return cb(new Error('Вы не отправили теги'));
@@ -91,24 +92,31 @@ export class Users {
 
   static create(
     users: string[],
+    chatId: string,
     nameTable: NameTableBD,
-    cb: (err: Error | null, res?: unknown) => void
+    cb: (err: Error | null, res?: unknown) => void,
   ): void {
     if (users.length === 0) {
       return cb(new Error('Вы не отправили теги'));
     }
 
-    const placeholders = users.map(() => '(?)').join(', ');
+    const placeholders = users.map(() => '(?, ?)').join(', ');
 
-    const sql = `INSERT INTO ${nameTable} (name) VALUES ${placeholders}`;
+    const sql = `INSERT INTO ${nameTable} (name, chatIds) VALUES ${placeholders}`;
 
-    db.run(sql, users, cb);
+    const values: string[] = [];
+    for (const user of users) {
+      values.push(user, JSON.stringify([chatId]));
+    }
+
+    db.run(sql, values, cb);
   }
+
   // todo обновить чтоб работала только по id
   static update(
     id: number,
     isActive: number | null,
-    cb: (err: Error | null, res?: { updated: number }) => void
+    cb: (err: Error | null, res?: { updated: number }) => void,
   ): void {
     if (!id) return cb(new Error('Please provide an id'));
 
@@ -126,10 +134,37 @@ export class Users {
     });
   }
 
+  // TODO написать функцию которая будет обновлять по заданым параметрам
+  static updateChatIdsForUsers(
+    users: { id: number; chatIds: string }[],
+    cb: (err: Error | null, res?: { updated: number }) => void,
+  ): void {
+    const sql = `
+    UPDATE users
+    SET chatIds = ?
+    WHERE id = ?
+  `;
+
+    let updated = 0;
+
+    db.serialize(() => {
+      for (const user of users) {
+        db.run(sql, [user.chatIds, user.id], function (err) {
+          if (err) return cb(err);
+          updated += this.changes;
+        });
+      }
+    });
+
+    db.wait(() => {
+      cb(null, { updated });
+    });
+  }
+
   static updateGitLabId(
     id: number,
     newIdGitLab: number,
-    cb: (err: Error | null, res?: { updated: number }) => void
+    cb: (err: Error | null, res?: { updated: number }) => void,
   ): void {
     const sql = `
 	 UPDATE users
@@ -146,7 +181,7 @@ export class Users {
   static updatePreset(
     id: number,
     preset: string,
-    cb: (err: Error | null, res?: { updated: number }) => void
+    cb: (err: Error | null, res?: { updated: number }) => void,
   ): void {
     const sql = `
 	 UPDATE users
@@ -164,7 +199,7 @@ export class Users {
     id: number,
     completedTasks: string,
     nameTable: NameTableBD,
-    cb: (err: Error | null, res?: { updated: number }) => void
+    cb: (err: Error | null, res?: { updated: number }) => void,
   ): void {
     const sql = `
 	 UPDATE ${nameTable}
@@ -179,12 +214,13 @@ export class Users {
   }
 
   static deleteAllCompletedTasks(
-    cb: (err: Error | null, res?: { updated: number }) => void
+    cb: (err: Error | null, res?: { updated: number }) => void,
   ): void {
     const sql = ` 
 	 UPDATE users
 	 SET completedTasks = '[]'
   `;
+
     // TODO узгать чем отличаеться run от all, get
     db.run(sql, [], function (err) {
       if (err) return cb(err);
@@ -213,11 +249,11 @@ export class Users {
     });
   }
 
-  // TODO переписать это хуйню
+  // TODO переписать эту хуйню
   static updateMultipleTasksUsers(
     completedTasks: string,
     id: number,
-    cb: (err: Error | null, res?: { updated: number }) => void
+    cb: (err: Error | null, res?: { updated: number }) => void,
   ) {
     const sql = `
 	 UPDATE tasksUsers

@@ -1,24 +1,31 @@
 import 'dotenv/config';
 import axios from 'axios';
 
-const header = {
-  // ! Не забывать про токен чтоб не просрочился
-  'PRIVATE-TOKEN': process.env.TOKEN_GIT_LAB as string,
-};
 export class ApiGitLab {
-  static async getMR(iid: string) {
+  static async getMR(iid: string, projectPath: string, gitLabToken: string) {
     try {
       const response = await axios.get(
-        `https://${process.env.BASE_URL}/api/v4/projects/${encodeURIComponent(
-          process.env.PROJECT_ID || ''
-        )}/merge_requests/${iid}`,
+        `https://${process.env.BASE_URL}/api/v4/projects/${
+          projectPath
+        }/merge_requests/${iid}`,
         {
-          headers: header,
-        }
+          headers: {
+            // ! Не забывать про токен чтоб не просрочился
+            'PRIVATE-TOKEN': gitLabToken,
+          },
+        },
       );
       return response.data;
     } catch (error) {
-      console.error('Error fetching merge requests:', error);
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `GitLab API error (${error.response?.status}): ${
+            error.response?.data?.message ?? error.message
+          }`,
+        );
+      }
+
+      throw error;
     }
   }
 }

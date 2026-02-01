@@ -4,12 +4,25 @@ import { ApiGitLab } from '../../api/apiGitLab';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from '../constant';
 import { MyContext } from '../../type';
 
-export const fetchMR = async (ctx: Context) => {
+export const fetchMR = async (ctx: MyContext) => {
   const text = ctx.message!.text!;
-  const idMR = text.match(REGEX_MR_ID)![1];
-  const MR = await ApiGitLab.getMR(idMR);
 
-  return MR;
+  const projectPath = encodeGitlabProjectPath(text);
+
+  const idMR = text.match(REGEX_MR_ID)![1];
+
+  const gitLabTokens = ctx.session.gitLabTokens[String(ctx.chat?.id)];
+
+  if (!gitLabTokens) {
+    throw new Error('Такого токена от GitLab нет всписке');
+  }
+
+  try {
+    const MR = await ApiGitLab.getMR(idMR, projectPath, gitLabTokens);
+    return MR;
+  } catch (error) {
+    ctx.reply(`Bot - ${error}`);
+  }
 };
 
 export const getTaskNumber = (nameBranch: string) => {
@@ -17,6 +30,15 @@ export const getTaskNumber = (nameBranch: string) => {
   const taskNumber = matchTask?.[0] ?? 'UNKNOWN';
 
   return taskNumber;
+};
+
+const encodeGitlabProjectPath = (text: string) => {
+  const url = new URL(
+    `${text.split(`${process.env.BASE_URL}`).slice(1)}`,
+    `https://${process.env.BASE_URL}`,
+  );
+
+  return url.pathname.split('/-/')[0].slice(1).split('/').join('%2F');
 };
 
 export const messageGenerator = ({
@@ -44,9 +66,13 @@ export const messageGenerator = ({
       }\n\n`
     : '';
 
-  const message = `МР от ${MR.author.name} @${
-    ctx.message!.from!.username
-  }\n\n${linkMR}${
+  const assigneeText = MR?.assignees[0]?.name
+    ? `<b>Assignee:</b> ${MR.assignees[0].name}\n`
+    : '';
+
+  const header = `МР от ${MR.author.name}\n<b>Отпраил:</b> @${ctx.message!.from!.username}\n${assigneeText}<b>Проект:</b> ${MR.title}\n`;
+
+  const message = `${header}${linkMR}${
     taskNumber !== 'UNKNOWN' ? `${taskLink}` : ''
   }${title}${description}${usersTags}   
     `;

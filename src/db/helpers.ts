@@ -1,3 +1,4 @@
+import { ChatСonfig } from './chatConfig/chatСonfig';
 import { IUser, NameTableBD, Users } from './users';
 
 export function getAllUsers(): Promise<IUser[]> {
@@ -10,6 +11,17 @@ export function getAllUsers(): Promise<IUser[]> {
     throw error;
   }
 }
+
+export const getAllChats = () => {
+  try {
+    const res = ChatСonfig.all();
+
+    return res;
+  } catch (error) {
+    console.error('Ошибка', error);
+    throw error;
+  }
+};
 
 export const findUsersByName = async (values: string[]): Promise<IUser[]> => {
   try {
@@ -24,7 +36,7 @@ export const findUsersByName = async (values: string[]): Promise<IUser[]> => {
 
 export const findUserById = async (
   id: number,
-  nameTable: NameTableBD
+  nameTable: NameTableBD,
 ): Promise<IUser | undefined> => {
   try {
     const res = await Users.findUserById(id, nameTable);
@@ -35,15 +47,50 @@ export const findUserById = async (
   }
 };
 
-export async function getNamesBd(users?: string[]) {
+export async function getNamesBd(chatId: string, users?: string[]) {
   const findUsersDb = await findUsersByName(users || []);
 
-  const usersNameBd = findUsersDb?.map((user) => user.name) || [];
+  const usersNameBd = findUsersDb?.map((user) => user.name);
 
-  const notFindUsersDb =
-    users?.filter((name) => !usersNameBd?.includes(name)) || [];
+  const usersToUpdate = users
+    ?.map((name) => {
+      const user = findUsersDb.find((u) => name.includes(u.name));
+      if (!user) return null;
 
-  return { notFindUsersDb, usersNameBd };
+      const currentChats: string[] = JSON.parse(user.chatIds ?? '[]');
+
+      if (currentChats.includes(chatId)) return null;
+
+      return {
+        ...user,
+        chatIds: JSON.stringify([...currentChats, chatId]),
+      };
+    })
+    .filter(Boolean) as IUser[];
+
+  const notFindUsersBd = users?.filter((name) => !usersNameBd?.includes(name));
+
+  // Users.create(notFindUsersBd, 'tasksUsers', (err) => {
+  //   if (err) return;
+  // });
+
+  if (usersToUpdate.length > 0) {
+    Users.updateChatIdsForUsers(usersToUpdate, (err, res) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log(`Обновлено записей: ${res?.updated}`);
+      }
+    });
+  }
+
+  if (chatId && notFindUsersBd?.length) {
+    Users.create(notFindUsersBd, chatId, 'users', (err) => {
+      if (err) return;
+    });
+  }
+
+  return { notFindUsersBd, usersNameBd, usersToUpdate };
 }
 
 export function findUsersByIdGitlab(idGitLab: number[]) {

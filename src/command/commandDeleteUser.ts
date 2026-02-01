@@ -1,32 +1,13 @@
-import { InlineKeyboard } from 'grammy';
-import {
-  chunkInlineKeyboardUser,
-  keyboardAskUserConfirmation,
-} from '../keyboards/keyboard';
+import { keyboardAskUserConfirmation } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
-import { findUserById, getAllUsers } from '../db/helpers';
+import { findUserById } from '../db/helpers';
 import { Users } from '../db';
 import { KeyCommand } from './constant';
-
-export const commandDeleteUser = async (ctx: TCallbackQueryContext) => {
-  ctx.answerCallbackQuery();
-  const listUsers = await getAllUsers();
-
-  const keyboardUser = InlineKeyboard.from(
-    chunkInlineKeyboardUser({ list: listUsers, textQuery: 'delete' })
-  );
-
-  ctx.callbackQuery.message?.editText(
-    'Нажмите на пользователя, чтобы  его удлаить.',
-    {
-      reply_markup: keyboardUser,
-    }
-  );
-};
 
 export const commandButtonDeleteUser = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
   const id = Number(ctx.callbackQuery.data.split('-')[1]);
+
   const user = await findUserById(id, 'users');
 
   ctx.session.keyCommand = KeyCommand.delete;
@@ -36,7 +17,7 @@ export const commandButtonDeleteUser = async (ctx: TCallbackQueryContext) => {
     `Вы уверены, что хотите удалить этого пользователя ${user?.name}?`,
     {
       reply_markup: keyboardAskUserConfirmation,
-    }
+    },
   );
 };
 

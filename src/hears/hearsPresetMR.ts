@@ -18,7 +18,7 @@ export const hearsPresetMR = async (ctx: MyContext) => {
 
     if (!preset.length) {
       await ctx.reply(
-        'У вас ещё нет  пресета.\n\nВы можете создать его через команду /menu → «Обновить пресет»'
+        'У вас ещё нет  пресета.\n\nВы можете создать его через команду /menu → «Обновить пресет»',
       );
       return;
     }

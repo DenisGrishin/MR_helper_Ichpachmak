@@ -5,4 +5,7 @@ export {
   getAllUsers,
   getNamesBd,
 } from './helpers';
+export { findChatById, findChatByChatId } from './chatConfig/helper';
+
+export { ChatСonfig } from './chatConfig/chatСonfig';
 export { Users, IUser, ITasksUsers } from './users';

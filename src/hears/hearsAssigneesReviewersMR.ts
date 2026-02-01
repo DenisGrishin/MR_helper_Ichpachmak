@@ -44,7 +44,7 @@ export const hearsAssigneesReviewersMR = async (ctx: MyContext) => {
 
     if (!formattedUsers.length) {
       await ctx.reply(
-        `В базе нет id этих пачанов, Assignees - ${MR.assignees[0].name}, Reviewers - ${MR.reviewers[0].name} `
+        `В базе нет id этих пачанов, Assignees - ${MR.assignees[0].name}, Reviewers - ${MR.reviewers[0].name} `,
       );
       return;
     }

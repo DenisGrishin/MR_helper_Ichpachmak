@@ -2,7 +2,6 @@ import { MyContext } from '../type';
 import { KeyCommand, TEXT_COMMAND } from './constant';
 
 export const handleCommand = (ctx: MyContext, key: KeyCommand) => {
-  // todo lastCommand перименовать эту переменую
   ctx.session.keyCommand = key;
 
   ctx.reply(TEXT_COMMAND[key], {

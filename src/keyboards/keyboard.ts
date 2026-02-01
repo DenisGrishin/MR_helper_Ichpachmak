@@ -1,7 +1,8 @@
 import { InlineKeyboard } from 'grammy';
-import { TCallbackQueryContext } from '../type';
 import { KeyCommand } from '../command/constant';
 import { IUser } from '../db';
+import { IChat } from '../db/chatConfig/chatСonfig';
+import { CommandUserAction } from './type';
 
 export const keyboardMenu = new InlineKeyboard()
   .text('Активировать пользователя', KeyCommand.editStatusUser)
@@ -10,26 +11,50 @@ export const keyboardMenu = new InlineKeyboard()
   .text('Обновить пресет', KeyCommand.updatePreset)
   .text('Список всех пользователей', KeyCommand.allUser)
   .row()
+  .text('Конфигурации чатов', KeyCommand.chatСonfig)
+  .row()
   .url(
     'Документация',
-    'https://wiki.yandex.ru/napravlenija-kompanii/frontend/spisok-botov/mr-helper/'
+    'https://wiki.yandex.ru/napravlenija-kompanii/frontend/spisok-botov/mr-helper/',
   );
 
-export const keyboardBack = new InlineKeyboard().text(
-  '< Назад',
-  KeyCommand.backToMenu
-);
+export const keyboardConfigChat = () =>
+  new InlineKeyboard().text('Добавить токен GitLab');
 
 export const keyboardAskUserConfirmation = new InlineKeyboard()
   .text('Нет', KeyCommand.noAnswer)
   .text('Да', KeyCommand.yesAnswer);
 
-export const chunkInlineKeyboardUser = ({
+export const chunkInlineKeyboardChats = ({
   list,
   textQuery,
 }: {
+  list: IChat[];
+  textQuery: CommandUserAction;
+}) => {
+  const keyboardButtonRows: any[] = [];
+
+  for (let i = 0; i < list.length; i += 2) {
+    const sliceChat = list.slice(i, i + 2).map((chat) => {
+      // тире есть в самом id чата
+      return InlineKeyboard.text(
+        chat.chatTitle,
+        `${textQuery}${chat.chatId}-${chat.chatTitle}`,
+      );
+    });
+
+    keyboardButtonRows.push(sliceChat);
+  }
+
+  return keyboardButtonRows;
+};
+
+export const chunkInlineKeyboardUser = ({
+  list,
+  action,
+}: {
   list: IUser[];
-  textQuery: 'editStatus' | 'delete';
+  action: CommandUserAction;
 }) => {
   const keyboardButtonRows: any[] = [];
 
@@ -37,7 +62,7 @@ export const chunkInlineKeyboardUser = ({
     const sliceUser = list.slice(i, i + 3).map((user) => {
       return InlineKeyboard.text(
         `${user.isActive ? '✅' : '❌'} ${user.name}`,
-        `${textQuery}-${user.id}`
+        `${action}-${user.id}`,
       );
     });
 
@@ -64,7 +89,7 @@ export const chunkInlineKeyboardPreset = ({
     const sliceUser = list.slice(i, i + 3).map((user) => {
       return InlineKeyboard.text(
         `${preset.includes(user.name) ? '✅' : '❌'} ${user.name}`,
-        `preset-${user.name}`
+        `preset-${user.name}`,
       );
     });
 

@@ -1,27 +1,36 @@
-import { getAllUsers } from "../db/helpers";
-import { IUser } from "../db/users";
-import { MyContext } from "../type";
+import { getAllUsers } from '../db/helpers';
+import { IUser } from '../db/users';
+import { findUsersInCurrentChat } from '../helper/helper';
+import { MyContext } from '../type';
 import {
   fetchMR,
   getTaskNumber,
   messageGenerator,
   taskService,
-} from "./helper";
+} from './helper';
 
 // TODO вынести отдельно чтоб при старте сохрнять ативных пользватлей
 export const hearsActiveMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
 
-  const users: IUser[] = await getAllUsers();
+  const listUsers: IUser[] = await getAllUsers();
+
+  const chatId = ctx.chat?.id;
+
+  if (!chatId) {
+    throw new Error('chatId отсутствует в сессии');
+  }
+
+  const usersInCurrentChat = findUsersInCurrentChat(String(chatId), listUsers);
 
   const authorMR = `@${ctx?.from?.username}`;
 
-  const dataAuthorMR = users.find((user) => user.name === authorMR);
+  const dataAuthorMR = listUsers.find((user) => user.name === authorMR);
 
-  const formattedUsers = users
+  const formattedUsers = usersInCurrentChat
     .map((u) => (u.isActive ? u.name : undefined))
     .filter((el) => el !== undefined && el !== authorMR)
-    .join(" ");
+    .join(' ');
 
   const MR = await fetchMR(ctx);
 
@@ -42,7 +51,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
   if (dataAuthorMR && taskNumber) {
     await taskService.recordCompletedTask(taskNumber, dataAuthorMR, ctx);
     await taskService.recordTask(
-      taskNumber === "UNKNOWN" ? "UNKNOWN" : MR.source_branch,
+      taskNumber === 'UNKNOWN' ? 'UNKNOWN' : MR.source_branch,
       dataAuthorMR.id,
     );
   }
@@ -51,9 +60,9 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     // @ts-ignore
     await ctx.reply(message, {
       disable_web_page_preview: true,
-      parse_mode: "HTML",
+      parse_mode: 'HTML',
     } as any);
   } catch (err) {
-    console.error("❌ Не удалось удалить сообщение:", err);
+    console.error('❌ Не удалось удалить сообщение:', err);
   }
 };

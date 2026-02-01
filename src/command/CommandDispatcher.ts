@@ -2,6 +2,7 @@ import { ITasksUsers, Users } from '../db';
 import { getNamesBd, findUsersByName } from '../db/helpers';
 import type { Context } from 'grammy';
 import { getTaskNumber } from '../hears/helper';
+import { MyContext } from '../type';
 
 const TEXT_MSG_1 = 'Эти(-от) пользователи(-ль)';
 const TEXT_MSG_TEST =
@@ -12,37 +13,43 @@ const TEXT_MSG_STAGE =
 interface IMessageBotArgs {
   messageId: number;
   successValue: string[];
+  usersToUpdate: string[];
   warningValue?: string[];
   ctx: Context;
   textSuccess?: string;
   textWarning?: string;
+  textUpdateUser?: string;
 }
 
 export class CommandDispatcher {
-  async setUser(ctx: Context): Promise<void> {
+  async setUser(
+    ctx: MyContext,
+    chatId: string | null | undefined,
+    chatTitle: string,
+  ): Promise<void> {
     const msgUserNames = ctx.message?.text?.match(/@\w+/g);
 
     if (!msgUserNames) {
       this.showErrorMsg('Отправьте теги кого хотите добавить в базу.', ctx);
       return;
+    } else if (!chatId) {
+      this.showErrorMsg('chatId отсутствует в сессии', ctx);
+      throw new Error('chatId отсутствует в сессии');
     }
 
-    const { notFindUsersDb, usersNameBd } = await getNamesBd(msgUserNames);
-
-    Users.create(notFindUsersDb, 'tasksUsers', (err) => {
-      if (err) return;
-    });
-
-    Users.create(notFindUsersDb, 'users', (err) => {
-      if (err) return;
-    });
+    const { notFindUsersBd, usersNameBd, usersToUpdate } = await getNamesBd(
+      chatId,
+      msgUserNames,
+    );
 
     await this.replyMessageBot({
       messageId: ctx.msg!.message_id,
-      successValue: notFindUsersDb,
+      successValue: notFindUsersBd || [],
       warningValue: usersNameBd,
+      usersToUpdate: usersToUpdate.map((u) => u.name),
       textSuccess: `${TEXT_MSG_1} были добавлены в базу`,
-      textWarning: `${TEXT_MSG_1} уже существуют в базе`,
+      textWarning: `${TEXT_MSG_1}  уже существуют в базе и добавлены в чат  ${chatTitle}`,
+      textUpdateUser: `${TEXT_MSG_1} добавлен(-ны) в новый чат ${chatTitle}`,
       ctx,
     });
   }
@@ -92,13 +99,16 @@ export class CommandDispatcher {
   async replyMessageBot({
     messageId,
     successValue,
+    usersToUpdate,
     warningValue,
     ctx,
     textSuccess = '',
     textWarning = '',
+    textUpdateUser = '',
   }: IMessageBotArgs): Promise<void> {
     const isWarning = !!warningValue?.length;
     const isSuccess = !!successValue.length;
+    const isUpdate = !!usersToUpdate.length;
 
     const messageSuccessNameDb = isSuccess
       ? `✅ ${textSuccess}: ${successValue.join(', ')}`
@@ -108,9 +118,17 @@ export class CommandDispatcher {
       ? `⚠️ ${textWarning}: ${warningValue?.join(', ')}`
       : '';
 
-    await ctx.reply(`${messageSuccessNameDb}\n\n${messageWarningNameDb}`, {
-      reply_parameters: { message_id: messageId },
-    });
+    console.log('warningValue ==> ', warningValue);
+    const messageUsersToUpdateNameDb = isUpdate
+      ? `🆙 ${textUpdateUser}: ${usersToUpdate?.join(', ')}`
+      : '';
+
+    await ctx.reply(
+      `${messageSuccessNameDb}\n\n${messageWarningNameDb}\n\n${messageUsersToUpdateNameDb}`,
+      {
+        reply_parameters: { message_id: messageId },
+      },
+    );
   }
 
   async createTasksList(ctx: Context, kontur: 'test' | 'stage') {
@@ -127,11 +145,11 @@ export class CommandDispatcher {
       }
 
       const filterList = listCompletedTasks.filter((el: string) =>
-        msgListTasks?.includes(el)
+        msgListTasks?.includes(el),
       );
 
       const createListLinkTask = filterList.map(
-        (el: string) => `https://itpm.mos.ru/browse/${getTaskNumber(el)}`
+        (el: string) => `https://itpm.mos.ru/browse/${getTaskNumber(el)}`,
       );
 
       const string = `${curr.name}\n${createListLinkTask.join('\n')}
@@ -160,7 +178,7 @@ export class CommandDispatcher {
           const listCompletedTasks = JSON.parse(user.completedTasks);
 
           const updateListTask = listCompletedTasks.filter(
-            (task: string) => !value?.includes(task)
+            (task: string) => !value?.includes(task),
           );
 
           acc.push({
@@ -171,7 +189,7 @@ export class CommandDispatcher {
         }
         return acc;
       },
-      [] as Array<{ id: number; name: string; completedTasks: string }>
+      [] as Array<{ id: number; name: string; completedTasks: string }>,
     );
 
     updateTask.forEach((el) => {

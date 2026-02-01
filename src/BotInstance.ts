@@ -1,12 +1,11 @@
-import "dotenv/config";
-import { Bot, GrammyError, HttpError, session } from "grammy";
-import { hydrate } from "@grammyjs/hydrate";
+import 'dotenv/config';
+import { Bot, GrammyError, HttpError, session } from 'grammy';
+import { hydrate } from '@grammyjs/hydrate';
 import {
   handleCommand,
   commandAllUser,
-  commandEditStatusUser,
+  commandUserAction,
   commandButtonEditUser,
-  commandDeleteUser,
   commandButtonDeleteUser,
   deleteUser,
   commandUpdatePreset,
@@ -15,19 +14,29 @@ import {
   commandButtonPreset,
   CommandDispatcher,
   commandCompletedTasks,
-} from "./command";
-import { KeyCommand, LIST_MY_COMMAND } from "./command/constant";
+  commandShowListChat,
+  commandMenuChat,
+} from './command';
+import { KeyCommand, LIST_MY_COMMAND } from './command/constant';
 import {
   hearsAssigneesReviewersMR,
   hearsPresetMR,
   hearsActiveMR,
   hearsDelMsgBot,
-} from "./hears";
-import { MyContext, SessionData } from "./type";
-import { keyboardMenu } from "./keyboards/keyboard";
+} from './hears';
+import { MyContext, SessionData, TCallbackQueryContext } from './type';
+import { keyboardMenu } from './keyboards/keyboard';
+import { ChatСonfig } from './db';
+import { GITLAB_TOKENS } from './main';
 
 function initialState(): SessionData {
-  return { keyCommand: null, userId: null };
+  return {
+    keyCommand: null,
+    userId: null,
+    gitLabTokens: GITLAB_TOKENS,
+    chatId: null,
+    chatTitle: null,
+  };
 }
 
 export class BotInstance {
@@ -47,10 +56,37 @@ export class BotInstance {
 
     // тут надо соблюдать порядок вызовов
     // TODO найти про это инфу
+
     this.initHears();
     this.initCommands();
     this.initInteractiveMenu();
     this.initErrorObserver();
+    this.joinAndLeaveChat();
+  }
+
+  joinAndLeaveChat() {
+    this.bot.on('my_chat_member', (ctx) => {
+      const chatId = String(ctx.chat.id);
+      const chatTitle = ctx.chat?.title || chatId;
+      const newStatus = ctx.myChatMember.new_chat_member.status;
+
+      if (newStatus === 'member') {
+        ctx.reply(
+          'Привет, товарищи! Меня добавили в ваш чат, готова помогать за миску цифрового риса 🍚!',
+        );
+
+        ChatСonfig.create(chatId, chatTitle, (err) => {
+          if (err) {
+            console.error('Проблема при создание конфигурации чата', err);
+          }
+        });
+      }
+
+      if (newStatus === 'kicked' || newStatus === 'left') {
+        ChatСonfig.delete(chatId);
+        console.log(`Бота удалили из чата ${chatId}`);
+      }
+    });
   }
 
   initHears() {
@@ -61,6 +97,7 @@ export class BotInstance {
     // git.russpass.dev gitlab.com — дергаем всех кто isActive
     this.bot.hears(
       new RegExp(`!!https://${process.env.BASE_URL}`),
+
       hearsActiveMR,
     );
 
@@ -75,7 +112,7 @@ export class BotInstance {
       hearsPresetMR,
     );
 
-    this.bot.hears("del-msg-bot", hearsDelMsgBot);
+    this.bot.hears('del-msg-bot', hearsDelMsgBot);
   }
 
   initInteractiveMenu() {
@@ -83,10 +120,54 @@ export class BotInstance {
     // команды интерактивного меню
     //============================================================
 
-    this.bot.callbackQuery(KeyCommand.editStatusUser, commandEditStatusUser);
+    this.bot.callbackQuery(KeyCommand.chatСonfig, commandMenuChat);
 
-    this.bot.callbackQuery(KeyCommand.delete, commandDeleteUser);
+    // ====== editStatus ======
 
+    this.bot.callbackQuery(
+      KeyCommand.editStatusUser,
+      (ctx: TCallbackQueryContext) =>
+        commandShowListChat(ctx, 'chatTitle', 'Выберите чат проекта:'),
+    );
+
+    // Кнопки списков чатов
+    this.bot.callbackQuery(/^chatTitle-\d/, (ctx: TCallbackQueryContext) => {
+      const chatId = String(ctx.callbackQuery.data.split('-')[1]);
+      const chatTitle = String(ctx.callbackQuery.data.split('-')[2]);
+
+      ctx.session.chatId = `-${chatId}`;
+      ctx.session.chatTitle = chatTitle;
+
+      commandUserAction(ctx, 'editStatus');
+      ctx.answerCallbackQuery();
+    });
+
+    this.bot.callbackQuery(/^editStatus-\d/, commandButtonEditUser);
+
+    // ====== delete ======
+
+    this.bot.callbackQuery(KeyCommand.delete, (ctx: TCallbackQueryContext) =>
+      commandShowListChat(
+        ctx,
+        'chatDelete',
+        'Выберите чат проекта, из которого хотите удалить пользователя.',
+      ),
+    );
+
+    this.bot.callbackQuery(/^chatDelete-\d/, (ctx: TCallbackQueryContext) => {
+      const chatId = String(ctx.callbackQuery.data.split('-')[1]);
+      const chatTitle = String(ctx.callbackQuery.data.split('-')[2]);
+
+      ctx.session.chatId = `-${chatId}`;
+      ctx.session.chatTitle = chatTitle;
+
+      commandUserAction(ctx, 'delete');
+      ctx.answerCallbackQuery();
+    });
+
+    this.bot.callbackQuery(/^delete-\d/, commandButtonDeleteUser);
+
+    // ======
     this.bot.callbackQuery(KeyCommand.updatePreset, commandUpdatePreset);
 
     this.bot.callbackQuery(KeyCommand.deletePreset, commandDeletePreset);
@@ -98,7 +179,7 @@ export class BotInstance {
       switch (ctx.session.keyCommand) {
         case KeyCommand.delete:
           await deleteUser(ctx.session.userId || 0);
-          await commandDeleteUser(ctx);
+          await commandUserAction(ctx, 'delete');
           break;
         case KeyCommand.deletePreset:
           await deletePreset(ctx);
@@ -118,7 +199,7 @@ export class BotInstance {
     this.bot.callbackQuery(KeyCommand.noAnswer, async (ctx) => {
       switch (ctx.session.keyCommand) {
         case KeyCommand.delete:
-          commandDeleteUser(ctx);
+          commandUserAction(ctx, 'delete');
           break;
         case KeyCommand.deletePreset:
           commandUpdatePreset(ctx);
@@ -135,14 +216,21 @@ export class BotInstance {
       ctx.answerCallbackQuery();
     });
 
-    this.bot.callbackQuery(/^editStatus-\d/, commandButtonEditUser);
+    this.bot.callbackQuery(/^setUser-\d/, (ctx: TCallbackQueryContext) => {
+      const chatId = String(ctx.callbackQuery.data.split('-')[1]);
+      const chatTitle = String(ctx.callbackQuery.data.split('-')[2]);
 
-    this.bot.callbackQuery(/^delete-\d/, commandButtonDeleteUser);
+      ctx.session.chatId = `-${chatId}`;
+      ctx.session.chatTitle = chatTitle;
+
+      handleCommand(ctx, KeyCommand.setUser);
+      ctx.answerCallbackQuery();
+    });
 
     this.bot.callbackQuery(/^preset-@*/, commandButtonPreset);
 
     this.bot.callbackQuery(KeyCommand.backToMenu, async (ctx) => {
-      ctx.callbackQuery.message?.editText("Выбирете пункт меню", {
+      ctx.callbackQuery.message?.editText('Выбирете пункт меню', {
         reply_markup: keyboardMenu,
       });
       ctx.answerCallbackQuery();
@@ -154,8 +242,12 @@ export class BotInstance {
     // команды через /
     //============================================================
 
-    this.bot.command([KeyCommand.set], (ctx: MyContext) =>
-      handleCommand(ctx, KeyCommand.set),
+    this.bot.command([KeyCommand.setUser], (ctx: MyContext) =>
+      commandShowListChat(
+        ctx,
+        'setUser',
+        'Выберите в какой проект добавить пользователя:',
+      ),
     );
 
     this.bot.command([KeyCommand.setIdGitLab], async (ctx: MyContext) =>
@@ -167,7 +259,7 @@ export class BotInstance {
     );
 
     this.bot.command([KeyCommand.menu], async (ctx: MyContext) => {
-      await ctx.reply("Выбирете пункт", { reply_markup: keyboardMenu });
+      await ctx.reply('Выбирете пункт', { reply_markup: keyboardMenu });
     });
 
     this.bot.command([KeyCommand.createTasksListTEST], async (ctx: MyContext) =>
@@ -184,23 +276,28 @@ export class BotInstance {
     // обработка сообщений после команд /
     //============================================================
 
-    this.bot.on("message", async (ctx: MyContext) => {
+    this.bot.on('message', async (ctx: MyContext) => {
       if (!ctx.session.keyCommand) return;
+      const chatId = ctx.session?.chatId;
+      const chatTitle = ctx.session?.chatTitle;
+
       switch (ctx.session.keyCommand) {
-        case KeyCommand.set:
-          this.commandDispatcherInstance.setUser(ctx);
+        case KeyCommand.setUser:
+          this.commandDispatcherInstance.setUser(ctx, chatId, chatTitle);
           break;
         case KeyCommand.setIdGitLab:
           this.commandDispatcherInstance.setIdGitLab(ctx);
           break;
         case KeyCommand.createTasksListTEST:
-          this.commandDispatcherInstance.createTasksList(ctx, "test");
+          this.commandDispatcherInstance.createTasksList(ctx, 'test');
           break;
         case KeyCommand.createTasksListSTAGE:
-          this.commandDispatcherInstance.createTasksList(ctx, "stage");
+          this.commandDispatcherInstance.createTasksList(ctx, 'stage');
           break;
       }
       ctx.session.keyCommand = null;
+      ctx.session.chatId = null;
+      ctx.session.chatTitle = null;
     });
   }
 
@@ -216,21 +313,21 @@ export class BotInstance {
 
       if (ctx && ctx.reply) {
         try {
-          await ctx.reply("Извините, произошла ошибка. Попробуйте позже.");
+          await ctx.reply('Извините, произошла ошибка. Попробуйте позже.');
         } catch (replyError) {
           console.error(
-            "Не удалось отправить сообщение об ошибке:",
+            'Не удалось отправить сообщение об ошибке:',
             replyError,
           );
         }
       }
 
       if (e instanceof GrammyError) {
-        console.error("Ошибка в запросе:", e.description);
+        console.error('Ошибка в запросе:', e.description);
       } else if (e instanceof HttpError) {
-        console.error("Не удалось связаться с Telegram:", e);
+        console.error('Не удалось связаться с Telegram:', e);
       } else {
-        console.error("Неизвестная ошибка:", e);
+        console.error('Неизвестная ошибка:', e);
       }
     });
   }
