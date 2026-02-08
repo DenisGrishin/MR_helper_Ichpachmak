@@ -4,11 +4,11 @@ import { TCallbackQueryContext } from '../type';
 import { findUserById, getAllUsers } from '../db/helpers';
 import { Users } from '../db';
 import { findUsersInCurrentChat } from '../helper/helper';
-import { CommandUserAction } from '../keyboards/type';
+import { CommandAction } from '../keyboards/type';
 
 export const commandUserAction = async (
   ctx: TCallbackQueryContext,
-  action: CommandUserAction,
+  action: CommandAction,
 ) => {
   const listUsers = await getAllUsers();
   const chatId = ctx.session.chatId;

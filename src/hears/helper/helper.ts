@@ -1,24 +1,25 @@
-import { Context } from 'grammy';
-
 import { ApiGitLab } from '../../api/apiGitLab';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from '../constant';
 import { MyContext } from '../../type';
 
-export const fetchMR = async (ctx: MyContext) => {
+export const fetchMR = async (
+  ctx: MyContext,
+  gitLabTokens: Record<string, string | null>,
+) => {
   const text = ctx.message!.text!;
 
   const projectPath = encodeGitlabProjectPath(text);
 
   const idMR = text.match(REGEX_MR_ID)![1];
+  console.log('ctx.session.gitLabTokens ==> ', ctx.session.gitLabTokens);
+  const gitLabToken = gitLabTokens[String(ctx.chat?.id)];
 
-  const gitLabTokens = ctx.session.gitLabTokens[String(ctx.chat?.id)];
-
-  if (!gitLabTokens) {
+  if (!gitLabToken) {
     throw new Error('Такого токена от GitLab нет всписке');
   }
 
   try {
-    const MR = await ApiGitLab.getMR(idMR, projectPath, gitLabTokens);
+    const MR = await ApiGitLab.getMR(idMR, projectPath, gitLabToken);
     return MR;
   } catch (error) {
     ctx.reply(`Bot - ${error}`);
@@ -57,8 +58,6 @@ export const messageGenerator = ({
   const taskLink = `<b>Задача:</b> https://itpm.mos.ru/browse/${taskNumber}\n\n`;
   const linkMR = `<b>МР:</b> ${ctx.message!.text?.slice(valueSliceLinkMR)}\n\n`;
   const title = MR.title ? `<b>Заголовок:</b> ${MR.title}\n\n` : '';
-  const referencesFull = MR.references.full.split('!')[0];
-  const projectName = referencesFull.split('/').pop();
 
   const description = MR.description
     ? `<b>Описание:</b>\n ${
@@ -72,8 +71,7 @@ export const messageGenerator = ({
     ? `<b>Assignee:</b> ${MR.assignees[0].name}\n`
     : '';
 
-  const header = `<b>МР создал:</b> ${MR.author.name}\n<b>Отпраил:</b> @${ctx.message!.from!.username}\n${assigneeText}<b>Проект:</b> ${projectName}\n`;
-  console.log('MR ==> ', MR);
+  const header = `МР от ${MR.author.name}\n<b>Отпраил:</b> @${ctx.message!.from!.username}\n${assigneeText}<b>Проект:</b> ${MR.title}\n`;
 
   const message = `${header}${linkMR}${
     taskNumber !== 'UNKNOWN' ? `${taskLink}` : ''

@@ -8,6 +8,7 @@ import {
 } from './helper';
 
 export const hearsPresetMR = async (ctx: MyContext) => {
+  console.log('ctx ==> ', ctx);
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
   try {
     const [dataAuthorMR] = await findUsersByName([
@@ -22,7 +23,7 @@ export const hearsPresetMR = async (ctx: MyContext) => {
       );
       return;
     }
-    const MR = await fetchMR(ctx);
+    const MR = await fetchMR(ctx, {});
 
     if (!MR) return;
 

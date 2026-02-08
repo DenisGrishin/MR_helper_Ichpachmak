@@ -1,6 +1,10 @@
-export type CommandUserAction =
-  | 'chatTitle'
+export type CommandAction =
   | 'setUser'
   | 'editStatus'
   | 'delete'
-  | 'chatDelete';
+  | 'chatDelete'
+  | 'editChatConfig';
+
+export type nameCallbackQuery = 'selectChat' | 'newUser';
+
+export type modKeybord = 'reply' | 'editText';

@@ -1,10 +1,20 @@
 import { InlineKeyboard } from 'grammy';
-import { KeyCommand } from '../command/constant';
+
 import { IUser } from '../db';
 import { IChat } from '../db/chatConfig/chatСonfig';
-import { CommandUserAction } from './type';
+import { CommandAction, nameCallbackQuery } from './type';
+import { KeyCommand } from '../constant/constant';
 
-export const keyboardMenu = new InlineKeyboard()
+export const userKeyboardMenu = new InlineKeyboard()
+  .text('Обновить пресет', KeyCommand.updatePreset)
+  .text('Список всех пользователей', KeyCommand.allUser)
+  .row()
+  .url(
+    'Документация',
+    'https://wiki.yandex.ru/napravlenija-kompanii/frontend/spisok-botov/mr-helper/',
+  );
+
+export const adminKeyboardMenu = new InlineKeyboard()
   .text('Активировать пользователя', KeyCommand.editStatusUser)
   .text('Удалить пользователя', KeyCommand.delete)
   .row()
@@ -12,7 +22,6 @@ export const keyboardMenu = new InlineKeyboard()
   .text('Список всех пользователей', KeyCommand.allUser)
   .row()
   .text('Конфигурации чатов', KeyCommand.chatСonfig)
-  .row()
   .url(
     'Документация',
     'https://wiki.yandex.ru/napravlenija-kompanii/frontend/spisok-botov/mr-helper/',
@@ -28,9 +37,11 @@ export const keyboardAskUserConfirmation = new InlineKeyboard()
 export const chunkInlineKeyboardChats = ({
   list,
   textQuery,
+  action,
 }: {
   list: IChat[];
-  textQuery: CommandUserAction;
+  textQuery: nameCallbackQuery;
+  action?: CommandAction;
 }) => {
   const keyboardButtonRows: any[] = [];
 
@@ -39,7 +50,7 @@ export const chunkInlineKeyboardChats = ({
       // тире есть в самом id чата
       return InlineKeyboard.text(
         chat.chatTitle,
-        `${textQuery}${chat.chatId}-${chat.chatTitle}`,
+        `${textQuery}${chat.chatId}-${chat.chatTitle}-${action}`,
       );
     });
 
@@ -54,7 +65,7 @@ export const chunkInlineKeyboardUser = ({
   action,
 }: {
   list: IUser[];
-  action: CommandUserAction;
+  action: CommandAction;
 }) => {
   const keyboardButtonRows: any[] = [];
 

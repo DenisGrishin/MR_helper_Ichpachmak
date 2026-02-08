@@ -33,13 +33,14 @@ export const findUsersByName = async (values: string[]): Promise<IUser[]> => {
     throw error;
   }
 };
-
+// todo доделать чтоб искало по тегу @username а не по имени username
 export const findUserById = async (
-  id: number,
+  id: number | string,
   nameTable: NameTableBD,
+  column: 'id' | 'name' = 'id',
 ): Promise<IUser | undefined> => {
   try {
-    const res = await Users.findUserById(id, nameTable);
+    const res = await Users.findUserById(id, nameTable, column);
 
     return res;
   } catch (error) {
@@ -47,7 +48,7 @@ export const findUserById = async (
   }
 };
 
-export async function getNamesBd(chatId: string, users?: string[]) {
+export async function syncUsersWithDb(chatId: string, users?: string[]) {
   const findUsersDb = await findUsersByName(users || []);
 
   const usersNameBd = findUsersDb?.map((user) => user.name);

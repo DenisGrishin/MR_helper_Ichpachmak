@@ -5,8 +5,9 @@ import {
 } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
 import { findUsersByName, getAllUsers } from '../db/helpers';
-import { KeyCommand } from './constant';
+
 import { Users } from '../db';
+import { KeyCommand } from '../constant/constant';
 
 export const commandUpdatePreset = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
@@ -21,14 +22,14 @@ export const commandUpdatePreset = async (ctx: TCallbackQueryContext) => {
   const preset = JSON.parse(user[0].preset || '');
 
   const keyboardUser = InlineKeyboard.from(
-    chunkInlineKeyboardPreset({ list: listUsers, preset })
+    chunkInlineKeyboardPreset({ list: listUsers, preset }),
   );
 
   await ctx.callbackQuery.message?.editText(
     preset.length ? `Ваш прессет: ${preset}` : 'Вы еще не создали пресет',
     {
       reply_markup: keyboardUser,
-    }
+    },
   );
 };
 
@@ -40,7 +41,7 @@ export const commandDeletePreset = async (ctx: TCallbackQueryContext) => {
     'Вы уверены, что хотите удалить свой пресет?',
     {
       reply_markup: keyboardAskUserConfirmation,
-    }
+    },
   );
 };
 
@@ -74,7 +75,7 @@ export const commandButtonPreset = async (ctx: TCallbackQueryContext) => {
     JSON.stringify(updateListPreset),
     (err) => {
       if (err) console.error(err);
-    }
+    },
   );
 
   commandUpdatePreset(ctx);

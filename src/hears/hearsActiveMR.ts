@@ -10,7 +10,10 @@ import {
 } from './helper';
 
 // TODO вынести отдельно чтоб при старте сохрнять ативных пользватлей
-export const hearsActiveMR = async (ctx: MyContext) => {
+export const hearsActiveMR = async (
+  ctx: MyContext,
+  gitLabTokens: Record<string, string | null>,
+) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
 
   const listUsers: IUser[] = await getAllUsers();
@@ -32,7 +35,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     .filter((el) => el !== undefined && el !== authorMR)
     .join(' ');
 
-  const MR = await fetchMR(ctx);
+  const MR = await fetchMR(ctx, gitLabTokens);
 
   if (!MR) return;
 

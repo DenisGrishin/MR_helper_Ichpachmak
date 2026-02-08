@@ -1,5 +1,6 @@
+import { KeyCommand } from '../constant/constant';
 import { MyContext } from '../type';
-import { KeyCommand, TEXT_COMMAND } from './constant';
+import { TEXT_COMMAND } from './constant';
 
 export const handleCommand = (ctx: MyContext, key: KeyCommand) => {
   ctx.session.keyCommand = key;

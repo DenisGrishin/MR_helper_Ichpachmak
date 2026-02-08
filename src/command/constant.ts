@@ -1,23 +1,4 @@
-export enum KeyCommand {
-  setUser = 'set_user',
-  delete = 'delete_user',
-  setIdGitLab = 'set_id_git_lab',
-  updatePreset = 'update_preset',
-  allUser = 'all_user',
-  showPreset = 'show_preset',
-  menu = 'menu',
-  editStatusUser = 'edit_status_user',
-  yesAnswer = 'yes_answer',
-  noAnswer = 'no_answer',
-  deletePreset = 'delete_preset',
-  backToMenu = 'back_to_menu',
-  completedTasks = 'completed_tasks',
-  chatСonfig = 'chat_config',
-  addTokenGitLab = 'add_token_git_lab',
-  createTasksListTEST = 'qwe',
-  createTasksListSTAGE = 'qwes',
-  showIdChat = 'show_id_chat',
-}
+import { KeyCommand } from '../constant/constant';
 
 export const TEXT_COMMAND: Record<string, string> = {
   [`${KeyCommand.setUser}`]:
@@ -47,9 +28,5 @@ export const LIST_MY_COMMAND = [
   {
     command: KeyCommand.createTasksListSTAGE,
     description: 'Создать список задач STAGE',
-  },
-  {
-    command: KeyCommand.showIdChat,
-    description: 'Посмотреть id',
   },
 ];

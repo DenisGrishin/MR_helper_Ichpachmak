@@ -3,7 +3,7 @@ export {
   findUsersByIdGitlab,
   findUsersByName,
   getAllUsers,
-  getNamesBd,
+  syncUsersWithDb as getNamesBd,
 } from './helpers';
 export { findChatById, findChatByChatId } from './chatConfig/helper';
 

@@ -1,5 +1,5 @@
 import { ITasksUsers, Users } from '../db';
-import { getNamesBd, findUsersByName } from '../db/helpers';
+import { syncUsersWithDb, findUsersByName } from '../db/helpers';
 import type { Context } from 'grammy';
 import { getTaskNumber } from '../hears/helper';
 import { MyContext } from '../type';
@@ -37,10 +37,8 @@ export class CommandDispatcher {
       throw new Error('chatId отсутствует в сессии');
     }
 
-    const { notFindUsersBd, usersNameBd, usersToUpdate } = await getNamesBd(
-      chatId,
-      msgUserNames,
-    );
+    const { notFindUsersBd, usersNameBd, usersToUpdate } =
+      await syncUsersWithDb(chatId, msgUserNames);
 
     await this.replyMessageBot({
       messageId: ctx.msg!.message_id,
@@ -85,6 +83,9 @@ export class CommandDispatcher {
     await this.replyMessageBot({
       messageId: ctx.msg!.message_id,
       successValue: tags,
+      textUpdateUser: '',
+      usersToUpdate: [],
+      warningValue: [],
       textSuccess: `Этому пользователю был добавлен id Git lab: ${msgGitId} тег`,
       ctx,
     });
@@ -118,7 +119,6 @@ export class CommandDispatcher {
       ? `⚠️ ${textWarning}: ${warningValue?.join(', ')}`
       : '';
 
-    console.log('warningValue ==> ', warningValue);
     const messageUsersToUpdateNameDb = isUpdate
       ? `🆙 ${textUpdateUser}: ${usersToUpdate?.join(', ')}`
       : '';
@@ -132,7 +132,6 @@ export class CommandDispatcher {
   }
 
   async createTasksList(ctx: Context, kontur: 'test' | 'stage') {
-    console.log(kontur);
     const msgListTasks = ctx.message?.text?.split('\n');
     const allTasks = await Users.all('tasksUsers');
     const objFiltreListTask: Record<string, string[]> = {};

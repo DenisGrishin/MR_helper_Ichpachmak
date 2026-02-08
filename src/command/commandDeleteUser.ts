@@ -2,7 +2,7 @@ import { keyboardAskUserConfirmation } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
 import { findUserById } from '../db/helpers';
 import { Users } from '../db';
-import { KeyCommand } from './constant';
+import { KeyCommand } from '../constant/constant';
 
 export const commandButtonDeleteUser = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();

@@ -1,23 +1,43 @@
 import { InlineKeyboard } from 'grammy';
-import { chunkInlineKeyboardChats, keyboardMenu } from '../keyboards/keyboard';
+import {
+  adminKeyboardMenu,
+  chunkInlineKeyboardChats,
+  userKeyboardMenu,
+} from '../keyboards/keyboard';
 import { MyContext, TCallbackQueryContext } from '../type';
 import { getAllChats } from '../db/helpers';
 import { findChatByChatId } from '../db';
-import { CommandUserAction } from '../keyboards/type';
 
-export const commandShowListChat = async (
-  ctx: TCallbackQueryContext | MyContext,
-  textQuery: CommandUserAction,
-  text: string,
-) => {
+import { isAdminUser } from '../helper/helper';
+import {
+  CommandAction,
+  modKeybord,
+  nameCallbackQuery,
+} from '../keyboards/type';
+
+export const commandShowListChat = async ({
+  ctx,
+  modKeybord = 'editText',
+  text,
+  action,
+}: {
+  ctx: TCallbackQueryContext | MyContext;
+  modKeybord?: modKeybord;
+  text: string;
+  action: CommandAction;
+}) => {
   const listChat = await getAllChats();
 
   const keyboardChat = InlineKeyboard.from(
-    chunkInlineKeyboardChats({ list: listChat, textQuery }),
+    chunkInlineKeyboardChats({
+      list: listChat,
+      textQuery: 'selectChat',
+      action,
+    }),
   );
 
-  switch (textQuery) {
-    case 'setUser':
+  switch (modKeybord) {
+    case 'reply':
       ctx.reply(text, {
         reply_markup: keyboardChat,
       });
@@ -37,7 +57,11 @@ export const commandMenuChat = async (ctx: TCallbackQueryContext) => {
 
   ctx.answerCallbackQuery();
 
+  const keybord = isAdminUser(ctx.from?.id || 0)
+    ? adminKeyboardMenu
+    : userKeyboardMenu;
+
   ctx.callbackQuery.message?.editText(`Меню чата: ${chat?.chatTitle}`, {
-    reply_markup: keyboardMenu,
+    reply_markup: keybord,
   });
 };

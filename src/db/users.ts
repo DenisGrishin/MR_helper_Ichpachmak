@@ -62,13 +62,17 @@ export class Users {
     });
   }
 
-  static findUserById(id: number, nameTable: NameTableBD): Promise<IUser> {
+  static findUserById(
+    id: number,
+    nameTable: NameTableBD,
+    column: 'id' | 'name' = 'id',
+  ): Promise<IUser> {
     return new Promise((resolve, reject) => {
       if (!id) {
         return reject(new Error('ID не передан'));
       }
 
-      const sql = `SELECT * FROM ${nameTable} WHERE id = ?`;
+      const sql = `SELECT * FROM ${nameTable} WHERE ${column} = ?`;
 
       db.get(sql, id, (err, row: IUser) => {
         if (err) return reject(err);

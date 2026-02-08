@@ -11,7 +11,7 @@ export interface IChat {
 export class ChatСonfig {
   static all(): Promise<IChat[]> {
     return new Promise((resolve, reject) => {
-      db.all(`SELECT * FROM chatСonfig`, (err, rows: IChat[]) => {
+      db.all(`SELECT * FROM chatConfig`, (err, rows: IChat[]) => {
         if (err) return reject(err);
         resolve(rows);
       });
@@ -23,7 +23,7 @@ export class ChatСonfig {
     chatTitle: string,
     cb: (err: Error | null, res?: unknown) => void,
   ): void {
-    const sql = `INSERT INTO chatСonfig (chatId,chatTitle)
+    const sql = `INSERT INTO chatConfig  (chatId,chatTitle)
      VALUES (?,?)`;
 
     db.run(sql, [idChat, chatTitle], cb);
@@ -32,7 +32,7 @@ export class ChatСonfig {
   static delete(idChat: string): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!idChat) return reject(new Error('Please provide an id'));
-      db.run(`DELETE FROM chatСonfig WHERE id = ?`, idChat, (err) => {
+      db.run(`DELETE FROM chatConfig  WHERE chatId = ?`, idChat, (err) => {
         if (err) return reject(err);
         resolve();
       });
@@ -45,7 +45,7 @@ export class ChatСonfig {
         return reject(new Error('ID не передан'));
       }
 
-      const sql = `SELECT * FROM chatСonfig WHERE id = ?`;
+      const sql = `SELECT * FROM chatConfig WHERE id = ?`;
 
       db.get(sql, id, (err, row: IChat) => {
         if (err) return reject(err);
@@ -60,11 +60,46 @@ export class ChatСonfig {
         return reject(new Error('ID не передан'));
       }
 
-      const sql = `SELECT * FROM chatСonfig WHERE chatId = ?`;
+      const sql = `SELECT * FROM chatConfig WHERE chatId = ?`;
 
       db.get(sql, id, (err, row: IChat) => {
         if (err) return reject(err);
         resolve(row);
+      });
+    });
+  }
+
+  static updateFieldByChatId(
+    chatId: string,
+    field: keyof IChat,
+    value: any,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!chatId || !field) {
+        return reject(new Error('chatId или поле не переданы'));
+      }
+
+      const allowedFields: (keyof IChat)[] = [
+        'chatId',
+        'chatTitle',
+        'gitBaseUrl',
+        'tokenGitLab',
+      ];
+
+      if (!allowedFields.includes(field)) {
+        return reject(new Error('Недопустимое поле'));
+      }
+
+      const sql = `UPDATE chatConfig SET ${field} = ? WHERE chatId = ?`;
+
+      db.run(sql, [value, chatId], function (err) {
+        if (err) return reject(err);
+
+        if (this.changes === 0) {
+          return reject(new Error('Запись не найдена'));
+        }
+
+        resolve();
       });
     });
   }

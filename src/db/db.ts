@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS users
   isActive INTEGER DEFAULT 0 CHECK (isActive IN (0, 1)),
   idGitLab INTEGER,
   preset TEXT DEFAULT '[]',
-  completedTasks TEXT DEFAULT '[]'
+  completedTasks TEXT DEFAULT '[]',
+  chatIds TEXT DEFAULT '[]'
 	)`;
 
   db.run(sql);
@@ -33,12 +34,12 @@ CREATE TABLE IF NOT EXISTS tasksUsers
 
 db.serialize(() => {
   const sql = ` 
-CREATE TABLE IF NOT EXISTS chatСonfig
+CREATE TABLE IF NOT EXISTS chatConfig
 	(
   id integer primary key,
-  chatId TEXT,
+  chatId TEXT UNIQUE,
   chatTitle TEXT,
-  gitBaseUrl TEXT
+  tokenGitLab TEXT UNIQUE
   )`;
 
   db.run(sql);
