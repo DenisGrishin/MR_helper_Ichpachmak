@@ -21,7 +21,9 @@ export enum KeyCommand {
   addConfigChat = 'add_config_chat',
 }
 
-export const LIST_ID_USER_ADMIN = [473675861];
+export const LIST_ID_USER_ADMIN = [
+  473675861, 8118180262, 856816417, 708634774, 1385322065,
+];
 
 export const ID_BOT = 473675861;
 
