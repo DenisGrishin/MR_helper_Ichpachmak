@@ -6,11 +6,12 @@ import { KeyCommand } from './constant/constant';
 export interface SessionData {
   keyCommand?: KeyCommand | null;
   userId?: number | null;
-  chatId?: string | null;
+  chatId?: number | null;
   chatTitle: string | null;
   addConfigChat: string | null;
   filedUpdateBD: string | null;
   gitLabTokens?: string[];
+  chatInternalId: number | null;
 }
 
 export type MyContext = HydrateFlavor<Context> & SessionFlavor<SessionData>;

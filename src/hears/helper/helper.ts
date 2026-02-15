@@ -11,7 +11,7 @@ export const fetchMR = async (
   const projectPath = encodeGitlabProjectPath(text);
 
   const idMR = text.match(REGEX_MR_ID)![1];
-  console.log('ctx.session.gitLabTokens ==> ', ctx.session.gitLabTokens);
+
   const gitLabToken = gitLabTokens[String(ctx.chat?.id)];
 
   if (!gitLabToken) {

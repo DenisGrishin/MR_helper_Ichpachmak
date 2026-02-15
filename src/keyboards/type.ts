@@ -1,6 +1,6 @@
 export type CommandAction =
   | 'setUser'
-  | 'editStatus'
+  | 'editStatusSendMR'
   | 'delete'
   | 'chatDelete'
   | 'editChatConfig';

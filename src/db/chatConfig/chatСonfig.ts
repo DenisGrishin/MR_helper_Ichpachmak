@@ -54,7 +54,7 @@ export class ChatСonfig {
     });
   }
 
-  static findByChatId(id: string): Promise<IChat> {
+  static findByTelegramId(id: number): Promise<IChat> {
     return new Promise((resolve, reject) => {
       if (!id) {
         return reject(new Error('ID не передан'));
@@ -70,7 +70,7 @@ export class ChatСonfig {
   }
 
   static updateFieldByChatId(
-    chatId: string,
+    chatId: number,
     field: keyof IChat,
     value: any,
   ): Promise<void> {

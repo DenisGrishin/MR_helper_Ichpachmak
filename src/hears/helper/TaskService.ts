@@ -48,6 +48,7 @@ class TaskService {
   };
 
   getOneCompletedTask = async () => {
+    return;
     const allCompletedTasks = await Users.getCompletedTasks();
 
     let completedTask = null;
@@ -68,7 +69,7 @@ class TaskService {
   recordCompletedTask = async (
     taskNumber: string,
     authorMR: IUser,
-    ctx: MyContext
+    ctx: MyContext,
   ) => {
     const completedTasks = JSON.parse(authorMR.completedTasks);
 
@@ -84,7 +85,7 @@ class TaskService {
 
     if (
       completedTasks.some(
-        (task: CompletedTask) => task.taskNumber === taskNumber
+        (task: CompletedTask) => task.taskNumber === taskNumber,
       )
     ) {
       return;
@@ -103,7 +104,7 @@ class TaskService {
         authorMR.id,
         updateCompletedTasks,
         'users',
-        () => {}
+        () => {},
       );
     } catch (error) {
       console.error(error);
@@ -127,7 +128,7 @@ class TaskService {
       idAuthor,
       updatedUsersTasks,
       'tasksUsers',
-      () => {}
+      () => {},
     );
   };
 }

@@ -13,7 +13,7 @@ export const findChatById = async (id: number) => {
 
 export const findChatByChatId = async (id: string) => {
   try {
-    const chatСonfig = await ChatСonfig.findByChatId(id);
+    const chatСonfig = await ChatСonfig.findByTelegramId(id);
 
     return chatСonfig;
   } catch (error) {

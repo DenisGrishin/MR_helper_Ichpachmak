@@ -10,6 +10,7 @@ export const joinAndLeaveBot = async (ctx: MyContext) => {
 
   if (newStatus === 'member') {
     addBotToChat(ctx, newStatus, chatTitle);
+    console.log(`Бота добавлен в чат ${chatId}`);
   }
 
   if (newStatus === 'left' || newStatus === 'kicked') {

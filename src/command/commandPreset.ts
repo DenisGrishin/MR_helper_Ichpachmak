@@ -1,7 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 import {
   chunkInlineKeyboardPreset,
-  keyboardAskUserConfirmation,
+  createKeyboardAskUserConfirmation,
 } from '../keyboards/keyboard';
 import { TCallbackQueryContext } from '../type';
 import { findUsersByName, getAllUsers } from '../db/helpers';
@@ -40,7 +40,7 @@ export const commandDeletePreset = async (ctx: TCallbackQueryContext) => {
   await ctx.callbackQuery.message?.editText(
     'Вы уверены, что хотите удалить свой пресет?',
     {
-      reply_markup: keyboardAskUserConfirmation,
+      reply_markup: createKeyboardAskUserConfirmation,
     },
   );
 };
@@ -56,7 +56,7 @@ export const deletePreset = async (ctx: TCallbackQueryContext) => {
 
 export const commandButtonPreset = async (ctx: TCallbackQueryContext) => {
   ctx.answerCallbackQuery();
-  const nameSlug = ctx.callbackQuery.data.split('-')[1];
+  const nameSlug = ctx.callbackQuery.data.split(':')[1];
 
   const authorName = ctx.from.username;
 

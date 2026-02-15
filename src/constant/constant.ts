@@ -3,12 +3,11 @@ import { ChatСonfig } from '../db';
 export enum KeyCommand {
   setUser = 'set_user',
   delete = 'delete_user',
-  setIdGitLab = 'set_id_git_lab',
   updatePreset = 'update_preset',
   allUser = 'all_user',
   showPreset = 'show_preset',
   menu = 'menu',
-  editStatusUser = 'edit_status_user',
+  editStatusSendMRUser = 'edit_status_user',
   yesAnswer = 'yes_answer',
   noAnswer = 'no_answer',
   deletePreset = 'delete_preset',

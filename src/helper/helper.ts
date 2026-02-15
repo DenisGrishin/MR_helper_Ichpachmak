@@ -1,7 +1,8 @@
 import { LIST_ID_USER_ADMIN } from '../constant/constant';
 import { IUser } from '../db';
 
-export const findUsersInCurrentChat = (chatId: string, listUsers: IUser[]) => {
+// TODO Возможно удлать надо
+export const findUsersInCurrentChat = (chatId: number, listUsers: IUser[]) => {
   if (!chatId) return [];
 
   return listUsers.filter((u) => JSON.parse(u.chatIds).includes(chatId));

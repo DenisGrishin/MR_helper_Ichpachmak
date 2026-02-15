@@ -15,7 +15,7 @@ export const userKeyboardMenu = new InlineKeyboard()
   );
 
 export const adminKeyboardMenu = new InlineKeyboard()
-  .text('Активировать пользователя', KeyCommand.editStatusUser)
+  .text('Активировать пользователя', KeyCommand.editStatusSendMRUser)
   .text('Удалить пользователя', KeyCommand.delete)
   .row()
   .text('Обновить пресет', KeyCommand.updatePreset)
@@ -30,9 +30,15 @@ export const adminKeyboardMenu = new InlineKeyboard()
 export const keyboardConfigChat = () =>
   new InlineKeyboard().text('Добавить токен GitLab');
 
-export const keyboardAskUserConfirmation = new InlineKeyboard()
-  .text('Нет', KeyCommand.noAnswer)
-  .text('Да', KeyCommand.yesAnswer);
+export const createKeyboardAskUserConfirmation = (
+  chatInternalId: number,
+  id: number,
+  action: KeyCommand,
+) => {
+  return new InlineKeyboard()
+    .text('Нет', `${KeyCommand.noAnswer}:${chatInternalId}:${action}`)
+    .text('Да', `${KeyCommand.yesAnswer}:${id}:${chatInternalId}:${action}`);
+};
 
 export const chunkInlineKeyboardChats = ({
   list,
@@ -47,10 +53,9 @@ export const chunkInlineKeyboardChats = ({
 
   for (let i = 0; i < list.length; i += 2) {
     const sliceChat = list.slice(i, i + 2).map((chat) => {
-      // тире есть в самом id чата
       return InlineKeyboard.text(
         chat.chatTitle,
-        `${textQuery}${chat.chatId}-${chat.chatTitle}-${action}`,
+        `${textQuery}:${chat.id}:${chat.chatId}:${chat.chatTitle}:${action}`,
       );
     });
 
@@ -63,9 +68,11 @@ export const chunkInlineKeyboardChats = ({
 export const chunkInlineKeyboardUser = ({
   list,
   action,
+  chatInternalId,
 }: {
   list: IUser[];
   action: CommandAction;
+  chatInternalId: number;
 }) => {
   const keyboardButtonRows: any[] = [];
 
@@ -73,7 +80,7 @@ export const chunkInlineKeyboardUser = ({
     const sliceUser = list.slice(i, i + 3).map((user) => {
       return InlineKeyboard.text(
         `${user.isActive ? '✅' : '❌'} ${user.name}`,
-        `${action}-${user.id}`,
+        `${action}:${user.id}:${chatInternalId}`,
       );
     });
 

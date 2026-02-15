@@ -12,12 +12,12 @@ export const actionAddConfig = async (
   const keyboardAskUserConfirmation = new InlineKeyboard()
     .text(
       'Добавить название проекта',
-      `${KeyCommand.addConfigChat}${chatId}-chatTitle`,
+      `${KeyCommand.addConfigChat}:${chatId}:chatTitle`,
     )
     .row()
     .text(
       'Добавить токен GitLab',
-      `${KeyCommand.addConfigChat}${chatId}-tokenGitLab`,
+      `${KeyCommand.addConfigChat}:${chatId}:tokenGitLab`,
     );
 
   if (ctx.from?.id) {
@@ -29,7 +29,7 @@ export const actionAddConfig = async (
 
 export const addConfigChat = async (
   ctx: MyContext,
-  chatId?: string | null,
+  chatId?: number | null,
   filedUpdateBD?: keyof ChatСonfig,
 ) => {
   const chatTitle = ctx.message?.text;

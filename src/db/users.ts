@@ -3,11 +3,7 @@ import db from './db';
 export interface IUser {
   id: number;
   name: string;
-  isActive: number;
-  idGitLab: number | null;
-  preset: string;
-  completedTasks: string;
-  chatIds: string;
+  tgId: number | null;
 }
 
 export interface ITasksUsers {
@@ -45,24 +41,94 @@ export class Users {
     db.all(sql, list, cb);
   }
 
-  static findUsersByName(value: string[]): Promise<IUser[]> {
+  static findUser(
+    id: number,
+    cb: (err: Error | null, users?: IUser[]) => void,
+  ): Promise<IUser | null> {
     return new Promise((resolve, reject) => {
-      if (value.length === 0) {
-        return reject(new Error('Вы не отправили теги'));
+      if (!id && id !== 0) {
+        return reject(new Error('Вы не отправили id'));
       }
 
-      const placeholders = value.map(() => '?').join(', ');
+      const sql = `SELECT * FROM users WHERE id = ?`;
 
-      const sql = `SELECT * FROM users WHERE name IN (${placeholders})`;
+      db.get(sql, [id], (err, row) => {
+        // db.get возвращает один объект, а не массив
+        if (err) return reject(err);
+        resolve(row || null);
+      });
+    });
+  }
 
-      db.all(sql, value, (err, rows: IUser[]) => {
+  static findUsersByName(
+    names: string[],
+    chatInternalId: number,
+  ): Promise<IUser[]> {
+    return new Promise((resolve, reject) => {
+      if (!names.length) {
+        return reject(new Error('Вы не отправили пользователей'));
+      }
+
+      const placeholders = names.map(() => '?').join(', ');
+
+      const sql = `
+    SELECT u.name
+    FROM chatMembers cm
+    JOIN users u ON u.id = cm.userId
+    WHERE u.name IN (${placeholders})
+    AND cm.chatId = ?
+  `;
+
+      db.all(sql, [...names, chatInternalId], (err, rows) => {
         if (err) return reject(err);
         resolve(rows);
       });
     });
   }
 
-  static findUserById(
+  static findUsersByChatId(
+    chatInternalId: number,
+    userFields: (keyof IUser)[] = ['id', 'name'], // поля из users
+    memberFields: (keyof any)[] = ['isActive'], // поля из chatMembers
+  ): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      // Формируем SELECT
+      const userSelect = userFields.map((f) => `u.${f}`).join(', ');
+      const memberSelect = memberFields.map((f) => `cm.${f}`).join(', ');
+      const selectClause = [userSelect, memberSelect]
+        .filter(Boolean)
+        .join(', ');
+
+      const sql = `
+      SELECT ${selectClause}
+      FROM chatMembers cm
+      JOIN users u ON u.id = cm.userId
+      WHERE cm.chatId = ?
+    `;
+
+      db.all(sql, [chatInternalId], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+  }
+
+  static findChatMember(userId: number, chatInternalId: number): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+      SELECT *
+      FROM chatMembers
+      WHERE userId = ? AND chatId = ?
+    `;
+
+      db.get(sql, [userId, chatInternalId], (err, row) => {
+        if (err) return reject(err);
+        resolve(row || null); // null, если запись не найдена
+      });
+    });
+  }
+
+  static findUserByIds(
     id: number,
     nameTable: NameTableBD,
     column: 'id' | 'name' = 'id',
@@ -94,47 +160,74 @@ export class Users {
     });
   }
 
-  static create(
-    users: string[],
-    chatId: string,
-    nameTable: NameTableBD,
-    cb: (err: Error | null, res?: unknown) => void,
-  ): void {
-    if (users.length === 0) {
-      return cb(new Error('Вы не отправили теги'));
-    }
+  static create(users: string[], chatInternalId: number, cb: any) {
+    if (!users.length) return cb(new Error('Нет пользователей'));
 
-    const placeholders = users.map(() => '(?, ?)').join(', ');
+    db.serialize(() => {
+      db.run('BEGIN');
 
-    const sql = `INSERT INTO ${nameTable} (name, chatIds) VALUES ${placeholders}`;
+      for (const name of users) {
+        db.run(`INSERT OR IGNORE INTO users (name) VALUES (?)`, [name]);
 
-    const values: string[] = [];
-    for (const user of users) {
-      values.push(user, JSON.stringify([chatId]));
-    }
+        db.run(
+          `
+        INSERT OR IGNORE INTO chatMembers (userId, chatId)
+        SELECT id, ?
+        FROM users
+        WHERE name = ?
+      `,
+          [chatInternalId, name],
+        );
+      }
 
-    db.run(sql, values, cb);
+      db.run('COMMIT', cb);
+    });
   }
 
   // todo обновить чтоб работала только по id
-  static update(
+
+  static updateChatIds(
     id: number,
-    isActive: number | null,
+    listChatIds: string[],
     cb: (err: Error | null, res?: { updated: number }) => void,
   ): void {
     if (!id) return cb(new Error('Please provide an id'));
 
     const sql = `
 	 UPDATE users
-	 SET isActive = ?
+	 SET chatIds = ?
 	 WHERE id = ?
 	 `;
 
-    const values = [isActive, id];
+    const values = [JSON.stringify(listChatIds), id];
 
     db.run(sql, values, function (err) {
       if (err) return cb(err);
       cb(null, { updated: this.changes });
+    });
+  }
+  static updateChatMember(
+    userId: number,
+    chatId: number,
+    fieldsToUpdate: Record<string, any>,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const keys = Object.keys(fieldsToUpdate);
+      if (!keys.length) return reject(new Error('Нет полей для обновления'));
+
+      const setClause = keys.map((key) => `${key} = ?`).join(', ');
+      const values = keys.map((key) => fieldsToUpdate[key]);
+
+      const sql = `
+      UPDATE chatMembers
+      SET ${setClause}
+      WHERE userId = ? AND chatId = ?
+      `;
+
+      db.run(sql, [...values, userId, chatId], function (err) {
+        if (err) return reject(err);
+        resolve();
+      });
     });
   }
 
@@ -205,6 +298,7 @@ export class Users {
     nameTable: NameTableBD,
     cb: (err: Error | null, res?: { updated: number }) => void,
   ): void {
+    return;
     const sql = `
 	 UPDATE ${nameTable}
 	 SET completedTasks = ?
@@ -220,6 +314,7 @@ export class Users {
   static deleteAllCompletedTasks(
     cb: (err: Error | null, res?: { updated: number }) => void,
   ): void {
+    return;
     const sql = ` 
 	 UPDATE users
 	 SET completedTasks = '[]'
@@ -233,6 +328,7 @@ export class Users {
   }
 
   static getCompletedTasks() {
+    return;
     return new Promise<{ completedTasks: string }[]>((resolve, reject) => {
       const sql = `SELECT completedTasks FROM users`;
 
@@ -243,10 +339,10 @@ export class Users {
     });
   }
 
-  static delete(id: number, nameTable: NameTableBD): Promise<void> {
+  static deleteUser(id: number): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!id) return reject(new Error('Please provide an id'));
-      db.run(`DELETE FROM ${nameTable} WHERE id = ?`, id, (err) => {
+      db.run(`DELETE FROM users WHERE id = ?`, id, (err) => {
         if (err) return reject(err);
         resolve();
       });

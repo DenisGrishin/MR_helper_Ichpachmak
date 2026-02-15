@@ -23,9 +23,12 @@ export const getAllChats = () => {
   }
 };
 
-export const findUsersByName = async (values: string[]): Promise<IUser[]> => {
+export const findUsersByName = async (
+  values: string[],
+  chatInternalId: number,
+): Promise<IUser[]> => {
   try {
-    const res = await Users.findUsersByName(values);
+    const res = await Users.findUsersByName(values, chatInternalId);
 
     return res;
   } catch (error) {
@@ -48,50 +51,24 @@ export const findUserById = async (
   }
 };
 
-export async function syncUsersWithDb(chatId: string, users?: string[]) {
-  const findUsersDb = await findUsersByName(users || []);
+export async function syncUsersWithDb(
+  chatInternalId: number,
+  users?: string[],
+) {
+  const findUsersDb = await findUsersByName(users || [], chatInternalId);
+  console.log('findUsersDb ==> ', findUsersDb);
 
   const usersNameBd = findUsersDb?.map((user) => user.name);
 
-  const usersToUpdate = users
-    ?.map((name) => {
-      const user = findUsersDb.find((u) => name.includes(u.name));
-      if (!user) return null;
-
-      const currentChats: string[] = JSON.parse(user.chatIds ?? '[]');
-
-      if (currentChats.includes(chatId)) return null;
-
-      return {
-        ...user,
-        chatIds: JSON.stringify([...currentChats, chatId]),
-      };
-    })
-    .filter(Boolean) as IUser[];
-
   const notFindUsersBd = users?.filter((name) => !usersNameBd?.includes(name));
 
-  // Users.create(notFindUsersBd, 'tasksUsers', (err) => {
-  //   if (err) return;
-  // });
-
-  if (usersToUpdate.length > 0) {
-    Users.updateChatIdsForUsers(usersToUpdate, (err, res) => {
-      if (err) {
-        console.error(err);
-      } else {
-        console.log(`Обновлено записей: ${res?.updated}`);
-      }
-    });
-  }
-
-  if (chatId && notFindUsersBd?.length) {
-    Users.create(notFindUsersBd, chatId, 'users', (err) => {
+  if (notFindUsersBd?.length) {
+    Users.create(notFindUsersBd, Number(chatInternalId), (err) => {
       if (err) return;
     });
   }
 
-  return { notFindUsersBd, usersNameBd, usersToUpdate };
+  return { notFindUsersBd, usersNameBd };
 }
 
 export function findUsersByIdGitlab(idGitLab: number[]) {

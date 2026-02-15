@@ -102,7 +102,7 @@ telegrambot/
 │   │   ├── commandDeleteUser.ts
 │   │   ├── commandCompletedTasks.ts
 │   │   ├── commandPreset.ts
-│   │   ├── commandEditStatusUser.ts
+│   │   ├── commandeditStatusSendMRUser.ts
 │   │   ├── CommandDispatcher.ts
 │   │   ├── constant.ts
 │   │   └── handleCommand.ts

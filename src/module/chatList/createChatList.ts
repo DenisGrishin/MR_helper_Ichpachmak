@@ -1,19 +1,14 @@
 import { InlineKeyboard } from 'grammy';
+import { getAllChats } from '../../db/helpers';
+import { CommandAction, modKeybord } from '../../keyboards/type';
+import { MyContext, TCallbackQueryContext } from '../../type';
 import {
   adminKeyboardMenu,
   chunkInlineKeyboardChats,
   userKeyboardMenu,
-} from '../keyboards/keyboard';
-import { MyContext, TCallbackQueryContext } from '../type';
-import { getAllChats } from '../db/helpers';
-import { findChatByChatId } from '../db';
-
-import { isAdminUser } from '../helper/helper';
-import {
-  CommandAction,
-  modKeybord,
-  nameCallbackQuery,
-} from '../keyboards/type';
+} from '../../keyboards/keyboard';
+import { findChatByChatId } from '../../db';
+import { isAdminUser } from '../../helper/helper';
 
 export const commandShowListChat = async ({
   ctx,
@@ -27,6 +22,13 @@ export const commandShowListChat = async ({
   action: CommandAction;
 }) => {
   const listChat = await getAllChats();
+
+  if (!listChat.length) {
+    await ctx.reply(
+      'Пока нет ни одного чата, добавьте чат, чтобы начать работу',
+    );
+    return;
+  }
 
   const keyboardChat = InlineKeyboard.from(
     chunkInlineKeyboardChats({
@@ -51,11 +53,8 @@ export const commandShowListChat = async ({
 };
 
 export const commandMenuChat = async (ctx: TCallbackQueryContext) => {
-  const id = Number(ctx.callbackQuery.data.split('-')[1]);
-  // тире добавляем "-" потому в базе записано тире в id
+  const id = Number(ctx.callbackQuery.data.split(':')[1]);
   const chat = await findChatByChatId(`-${id}`);
-
-  ctx.answerCallbackQuery();
 
   const keybord = isAdminUser(ctx.from?.id || 0)
     ? adminKeyboardMenu
@@ -64,4 +63,6 @@ export const commandMenuChat = async (ctx: TCallbackQueryContext) => {
   ctx.callbackQuery.message?.editText(`Меню чата: ${chat?.chatTitle}`, {
     reply_markup: keybord,
   });
+
+  ctx.answerCallbackQuery();
 };
