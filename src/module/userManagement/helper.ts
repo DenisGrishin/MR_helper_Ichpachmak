@@ -55,15 +55,40 @@ export const showErrorMsg = async (msgError: string, ctx: Context) => {
   });
 };
 
+const getListUsers = async (chatInternalId: number, isAll: boolean = false) => {
+  if (isAll) {
+    const selectChatUsers = await Users.findUsersByChatId(
+      chatInternalId,
+      ['id', 'name'],
+      [],
+    );
+    const allUsers = await Users.all();
+
+    const selectChatUsersId = selectChatUsers.map((user) => user.id);
+
+    return allUsers.map((user) => {
+      if (selectChatUsersId.includes(user.id)) {
+        return { ...user, isActive: 1 };
+      }
+      return user;
+    });
+  }
+
+  return await Users.findUsersByChatId(
+    chatInternalId,
+    ['id', 'name'],
+    ['isActive'],
+  );
+};
+
 export const createListUsers = async (
   ctx: TCallbackQueryContext,
   action: CommandAction,
   chatInternalId: number,
 ) => {
-  const listUsers = await Users.findUsersByChatId(
+  const listUsers = await getListUsers(
     chatInternalId,
-    ['id', 'name'],
-    ['isActive'],
+    action === 'addUserToChat',
   );
 
   if (!chatInternalId) {
@@ -80,13 +105,34 @@ export const createListUsers = async (
 
   let messageText = `<b>Чат ${ctx.session.chatTitle?.toUpperCase()}</b>\n\n`;
 
-  if (action === 'editStatusSendMR') {
-    messageText +=
-      'Нажмите на пользователя, чтобы изменить его статус.\n\n' +
-      '✅ Активный пользователь — будет упоминаться при отправке MR.\n' +
-      '❌ Неактивный пользователь — не будет упоминаться.';
-  } else if (action === 'delete') {
-    messageText += 'Нажмите на пользователя, чтобы его удалить.';
+  switch (action) {
+    case 'editStatusSendMR':
+      messageText +=
+        'Нажмите на пользователя, чтобы изменить его статус.\n\n' +
+        '✅ Активный пользователь — будет упоминаться при отправке MR.\n' +
+        '❌ Неактивный пользователь — не будет упоминаться.';
+      break;
+
+    case 'delete':
+      messageText +=
+        'Нажмите на пользователя, чтобы его удалить.\n\n' +
+        'ВНИМАНИЕ!!! ПОЛЬЗОВАТЕЛЬ УДАЛИТЬСЯ ИЗ ВСЕХ ЧАТОВ.';
+      break;
+
+    case 'deleteFromChat':
+      messageText += 'Нажмите на пользователя, чтобы удалить его из чата.';
+      break;
+
+    case 'addUserToChat':
+      messageText +=
+        'Нажмите на пользователя, чтобы добавить его в чат.\n' +
+        '✅ Пользователь уже есть в этом чате.\n' +
+        '❌ Его нет в чате.';
+      break;
+
+    default:
+      console.warn('Неизвестное действие:', action);
+      break;
   }
 
   await ctx.callbackQuery.message?.editText(messageText, {

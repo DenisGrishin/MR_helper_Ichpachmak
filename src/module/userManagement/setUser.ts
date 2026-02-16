@@ -5,35 +5,15 @@ import { TEXT_MSG_1 } from './constanta';
 import { replyMessageBot, showErrorMsg } from './helper';
 
 export const handleSetUserToChat = async (ctx: TCallbackQueryContext) => {
+  // TODO надо дописать
   const chatId = Number(ctx.callbackQuery.data.split(':')[1]);
   const name = ctx.callbackQuery.data.split(':')[2];
-  console.log('name ==> ', name);
   const user = await findUserById(`@${name}`, 'users', 'name');
-  console.log('user ==> ', user);
-  const userChatIds = user?.chatIds ? JSON.parse(user.chatIds) : [];
 
   if (!user) {
-    Users.create([`@${name}`], chatId, (err) => {
+    Users.create([`@${name}`], chatId, (err) => { 
       if (err) return;
     });
-  }
-
-  if (user && userChatIds && !userChatIds.includes(chatId)) {
-    Users.updateChatIdsForUsers(
-      [
-        {
-          id: user.id,
-          chatIds: JSON.stringify([...userChatIds, chatId]),
-        },
-      ],
-      (err, res) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log(`Обновлено записей: ${res?.updated}`);
-        }
-      },
-    );
   }
 
   ctx.answerCallbackQuery();

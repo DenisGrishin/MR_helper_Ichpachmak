@@ -1,13 +1,19 @@
 import { findUsersByName } from '../db/helpers';
 import { MyContext } from '../type';
 import { CompletedTask } from '../hears';
+import { Users } from '../db';
 
-export const commandCompletedTasks = async (ctx: MyContext) => {
+export const commandCompletedTasks = async (
+  ctx: MyContext,
+  chatInternalId: number,
+) => {
   const author = `@${ctx?.from?.username}`;
-  const users = await findUsersByName([author]);
-  const { completedTasks } = users[0];
 
-  const parseCompletedTasks = JSON.parse(completedTasks);
+  const currentUser = await Users.findByUser(author);
+
+  const users = await Users.findChatMember(currentUser.id, chatInternalId);
+
+  const parseCompletedTasks = JSON.parse(users.completedTasks);
 
   const listCompletedTasks = parseCompletedTasks
     .map((task: CompletedTask) => {
@@ -22,6 +28,6 @@ export const commandCompletedTasks = async (ctx: MyContext) => {
     {
       reply_parameters: { message_id: ctx.msg!.message_id },
       parse_mode: 'HTML',
-    }
+    },
   );
 };

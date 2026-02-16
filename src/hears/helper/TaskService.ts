@@ -66,49 +66,16 @@ class TaskService {
     return completedTask;
   };
 
-  recordCompletedTask = async (
-    taskNumber: string,
-    authorMR: IUser,
-    ctx: MyContext,
-  ) => {
-    const completedTasks = JSON.parse(authorMR.completedTasks);
-
-    const isNewDay = this.hasDayChanged({
-      dateMsg: ctx.msg?.date,
-      timeToCheck: this.timeToCheck,
-    });
-
-    if (isNewDay) {
-      Users.deleteAllCompletedTasks(() => {});
-      this.createTimeToCheck();
-    }
-
-    if (
-      completedTasks.some(
-        (task: CompletedTask) => task.taskNumber === taskNumber,
-      )
-    ) {
-      return;
-    }
-
-    try {
-      if (!taskNumber) throw new Error('Нет номара задачи');
-
-      const updateCompletedTasks = JSON.stringify([
-        ...(isNewDay ? [] : completedTasks),
-        { taskNumber, dateTask: ctx.message?.date },
-      ]);
-
-      // TODO тут дописать третий аругемент
-      Users.updateCompletedTasks(
-        authorMR.id,
-        updateCompletedTasks,
-        'users',
-        () => {},
-      );
-    } catch (error) {
-      console.error(error);
-    }
+  recordCompletedTask = async ({
+    taskNumber,
+    completedTasks,
+    ctx,
+  }: {
+    taskNumber: string;
+    completedTasks: string[];
+    ctx: MyContext;
+  }) => {
+    console.log('taskNumber ==> ', taskNumber);
   };
 
   recordTask = async (currentTask: string, idAuthor: number) => {
@@ -124,12 +91,12 @@ class TaskService {
 
     const updatedUsersTasks = JSON.stringify([...tasks, currentTask]);
 
-    Users.updateCompletedTasks(
-      idAuthor,
-      updatedUsersTasks,
-      'tasksUsers',
-      () => {},
-    );
+    // Users.updateCompletedTasks(
+    //   idAuthor,
+    //   updatedUsersTasks,
+    //   'tasksUsers',
+    //   () => {},
+    // );
   };
 }
 

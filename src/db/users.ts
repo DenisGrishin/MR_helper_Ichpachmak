@@ -6,6 +6,16 @@ export interface IUser {
   tgId: number | null;
 }
 
+export interface IChatMembers {
+  id: number;
+  userId: number;
+  chatId: number;
+  isActive: boolean;
+  preset: string;
+  completedTasks: string;
+  idGitLab: string;
+}
+
 export interface ITasksUsers {
   id: number;
   name: string;
@@ -16,9 +26,9 @@ export interface ITasksUsers {
 export type NameTableBD = 'users' | 'tasksUsers';
 
 export class Users {
-  static all(nameTable: NameTableBD): Promise<IUser[]> {
+  static all(): Promise<IUser[]> {
     return new Promise((resolve, reject) => {
-      db.all(`SELECT * FROM ${nameTable}`, (err, rows: IUser[]) => {
+      db.all(`SELECT * FROM users`, (err, rows: IUser[]) => {
         if (err) return reject(err);
         resolve(rows);
       });
@@ -60,6 +70,23 @@ export class Users {
     });
   }
 
+  // new
+  static findByUser(name: string): Promise<IChat> {
+    return new Promise((resolve, reject) => {
+      if (!name) {
+        return reject(new Error('Name не передан'));
+      }
+
+      const sql = `SELECT * FROM users WHERE name = ?`;
+
+      db.get(sql, name, (err, row: IChat) => {
+        if (err) return reject(err);
+        resolve(row);
+      });
+    });
+  }
+
+  // new
   static findUsersByName(
     names: string[],
     chatInternalId: number,
@@ -74,9 +101,9 @@ export class Users {
       const sql = `
     SELECT u.name
     FROM chatMembers cm
-    JOIN users u ON u.id = cm.userId
+    JOIN users u ON u.id = cm.userInternalId
     WHERE u.name IN (${placeholders})
-    AND cm.chatId = ?
+    AND cm.chatInternalId = ?
   `;
 
       db.all(sql, [...names, chatInternalId], (err, rows) => {
@@ -86,10 +113,11 @@ export class Users {
     });
   }
 
+  // new
   static findUsersByChatId(
     chatInternalId: number,
     userFields: (keyof IUser)[] = ['id', 'name'], // поля из users
-    memberFields: (keyof any)[] = ['isActive'], // поля из chatMembers
+    memberFields: (keyof any)[] = ['isActive', 'preset', 'completedTasks'], // поля из chatMembers
   ): Promise<any[]> {
     return new Promise((resolve, reject) => {
       // Формируем SELECT
@@ -102,8 +130,8 @@ export class Users {
       const sql = `
       SELECT ${selectClause}
       FROM chatMembers cm
-      JOIN users u ON u.id = cm.userId
-      WHERE cm.chatId = ?
+      JOIN users u ON u.id = cm.userInternalId
+      WHERE cm.chatInternalId = ?
     `;
 
       db.all(sql, [chatInternalId], (err, rows) => {
@@ -113,12 +141,13 @@ export class Users {
     });
   }
 
+  // new
   static findChatMember(userId: number, chatInternalId: number): Promise<any> {
     return new Promise((resolve, reject) => {
       const sql = `
       SELECT *
       FROM chatMembers
-      WHERE userId = ? AND chatId = ?
+      WHERE userInternalId = ? AND chatInternalId = ?
     `;
 
       db.get(sql, [userId, chatInternalId], (err, row) => {
@@ -128,38 +157,22 @@ export class Users {
     });
   }
 
-  static findUserByIds(
-    id: number,
-    nameTable: NameTableBD,
-    column: 'id' | 'name' = 'id',
-  ): Promise<IUser> {
+  // new
+  static addUserToChat(userId: number, chatInternalId: number): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!id) {
-        return reject(new Error('ID не передан'));
-      }
+      const sql = `
+      INSERT OR IGNORE INTO chatMembers (userInternalId, chatInternalId)
+      VALUES (?, ?)
+    `;
 
-      const sql = `SELECT * FROM ${nameTable} WHERE ${column} = ?`;
-
-      db.get(sql, id, (err, row: IUser) => {
+      db.run(sql, [userId, chatInternalId], (err) => {
         if (err) return reject(err);
-        resolve(row);
+        resolve();
       });
     });
   }
 
-  static findByIdGitLabs(idGitLabs: number[]): Promise<IUser[]> {
-    return new Promise((resolve, reject) => {
-      const placeholders = idGitLabs.map(() => '?').join(',');
-
-      const sql = `SELECT * FROM users WHERE idGitLab IN (${placeholders})`;
-
-      db.all(sql, idGitLabs, (err, rows: IUser[]) => {
-        if (err) return reject(err);
-        resolve(rows);
-      });
-    });
-  }
-
+  // new
   static create(users: string[], chatInternalId: number, cb: any) {
     if (!users.length) return cb(new Error('Нет пользователей'));
 
@@ -171,7 +184,7 @@ export class Users {
 
         db.run(
           `
-        INSERT OR IGNORE INTO chatMembers (userId, chatId)
+        INSERT OR IGNORE INTO chatMembers (userInternalId, chatInternalId)
         SELECT id, ?
         FROM users
         WHERE name = ?
@@ -184,28 +197,7 @@ export class Users {
     });
   }
 
-  // todo обновить чтоб работала только по id
-
-  static updateChatIds(
-    id: number,
-    listChatIds: string[],
-    cb: (err: Error | null, res?: { updated: number }) => void,
-  ): void {
-    if (!id) return cb(new Error('Please provide an id'));
-
-    const sql = `
-	 UPDATE users
-	 SET chatIds = ?
-	 WHERE id = ?
-	 `;
-
-    const values = [JSON.stringify(listChatIds), id];
-
-    db.run(sql, values, function (err) {
-      if (err) return cb(err);
-      cb(null, { updated: this.changes });
-    });
-  }
+  // new
   static updateChatMember(
     userId: number,
     chatId: number,
@@ -221,57 +213,13 @@ export class Users {
       const sql = `
       UPDATE chatMembers
       SET ${setClause}
-      WHERE userId = ? AND chatId = ?
+      WHERE userInternalId = ? AND chatInternalId = ?
       `;
 
       db.run(sql, [...values, userId, chatId], function (err) {
         if (err) return reject(err);
         resolve();
       });
-    });
-  }
-
-  // TODO написать функцию которая будет обновлять по заданым параметрам
-  static updateChatIdsForUsers(
-    users: { id: number; chatIds: string }[],
-    cb: (err: Error | null, res?: { updated: number }) => void,
-  ): void {
-    const sql = `
-    UPDATE users
-    SET chatIds = ?
-    WHERE id = ?
-  `;
-
-    let updated = 0;
-
-    db.serialize(() => {
-      for (const user of users) {
-        db.run(sql, [user.chatIds, user.id], function (err) {
-          if (err) return cb(err);
-          updated += this.changes;
-        });
-      }
-    });
-
-    db.wait(() => {
-      cb(null, { updated });
-    });
-  }
-
-  static updateGitLabId(
-    id: number,
-    newIdGitLab: number,
-    cb: (err: Error | null, res?: { updated: number }) => void,
-  ): void {
-    const sql = `
-	 UPDATE users
-	 SET idGitLab = ?
-	 WHERE id = ?
-  `;
-
-    db.run(sql, [newIdGitLab, id], function (err) {
-      if (err) return cb(err);
-      cb(null, { updated: this.changes });
     });
   }
 
@@ -287,25 +235,6 @@ export class Users {
   `;
 
     db.run(sql, [preset, id], function (err) {
-      if (err) return cb(err);
-      cb(null, { updated: this.changes });
-    });
-  }
-
-  static updateCompletedTasks(
-    id: number,
-    completedTasks: string,
-    nameTable: NameTableBD,
-    cb: (err: Error | null, res?: { updated: number }) => void,
-  ): void {
-    return;
-    const sql = `
-	 UPDATE ${nameTable}
-	 SET completedTasks = ?
-	 WHERE id = ?
-  `;
-
-    db.run(sql, [completedTasks, id], function (err) {
       if (err) return cb(err);
       cb(null, { updated: this.changes });
     });
@@ -346,6 +275,26 @@ export class Users {
         if (err) return reject(err);
         resolve();
       });
+    });
+  }
+
+  static deleteChatMember(
+    userInternalId: number,
+    chatInternalId: number,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!userInternalId || !chatInternalId) {
+        return reject(new Error('Please provide userId and chatId'));
+      }
+
+      db.run(
+        `DELETE FROM chatMembers WHERE userInternalId = ? AND chatInternalId = ?`,
+        [userInternalId, chatInternalId],
+        (err) => {
+          if (err) return reject(err);
+          resolve();
+        },
+      );
     });
   }
 

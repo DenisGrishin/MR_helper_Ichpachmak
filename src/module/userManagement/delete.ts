@@ -3,12 +3,20 @@ import { findUserById, Users } from '../../db';
 import { createKeyboardAskUserConfirmation } from '../../keyboards/keyboard';
 import { TCallbackQueryContext } from '../../type';
 
-export const handlerDeleteUser = async (ctx: TCallbackQueryContext) => {
+export const handlerDeleteUser = async ({
+  ctx,
+  text,
+  action,
+}: {
+  ctx: TCallbackQueryContext;
+  text: string;
+  action: 'delete' | 'deleteFromChat';
+}) => {
   ctx.answerCallbackQuery();
-  const id = Number(ctx.callbackQuery.data.split(':')[1]);
+  const userInternalId = Number(ctx.callbackQuery.data.split(':')[1]);
   const chatInternalId = Number(ctx.callbackQuery.data.split(':')[2]);
 
-  const user = await Users.findUser(id, (err, users) => {
+  const user = await Users.findUser(userInternalId, (err, users) => {
     if (err) {
       console.error(err);
     } else if (users && users.length > 0) {
@@ -18,20 +26,26 @@ export const handlerDeleteUser = async (ctx: TCallbackQueryContext) => {
     }
   });
 
-  ctx.callbackQuery.message?.editText(
-    `Вы уверены, что хотите удалить этого пользователя ${user?.name}?`,
-    {
-      reply_markup: createKeyboardAskUserConfirmation(
-        chatInternalId,
-        id,
-        KeyCommand.delete,
-      ),
-    },
-  );
+  ctx.callbackQuery.message?.editText(`${text}\n\n${user?.name}?`, {
+    reply_markup: createKeyboardAskUserConfirmation(
+      chatInternalId,
+      userInternalId,
+      KeyCommand[action],
+    ),
+  });
 };
 
 export const deleteUser = async (id: number) => {
   if (!id) throw new Error('Нет такого id');
 
   await Users.deleteUser(id);
+};
+
+export const deleteChatMebers = async (
+  userInternalId: number,
+  chatInternalId: number,
+) => {
+  if (!userInternalId) throw new Error('Нет такого userInternalId');
+
+  await Users.deleteChatMember(userInternalId, chatInternalId);
 };

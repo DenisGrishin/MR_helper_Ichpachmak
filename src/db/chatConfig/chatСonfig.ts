@@ -54,6 +54,7 @@ export class ChatСonfig {
     });
   }
 
+  // new
   static findByTelegramId(id: number): Promise<IChat> {
     return new Promise((resolve, reject) => {
       if (!id) {

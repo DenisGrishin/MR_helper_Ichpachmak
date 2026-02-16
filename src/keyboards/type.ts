@@ -3,7 +3,10 @@ export type CommandAction =
   | 'editStatusSendMR'
   | 'delete'
   | 'chatDelete'
-  | 'editChatConfig';
+  | 'editChatConfig'
+  | 'deleteFromChat'
+  | 'addUserToChat'
+  | 'completedTasks';
 
 export type nameCallbackQuery = 'selectChat' | 'newUser';
 

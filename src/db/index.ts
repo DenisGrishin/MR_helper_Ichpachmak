@@ -1,6 +1,5 @@
 export {
   findUserById,
-  findUsersByIdGitlab,
   findUsersByName,
   getAllUsers,
   syncUsersWithDb as getNamesBd,

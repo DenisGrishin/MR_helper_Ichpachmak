@@ -23,11 +23,17 @@ import { isAdminUser } from './helper/helper';
 import { actionEditConfig } from './module/chatConfig/edit';
 import { joinAndLeaveBot } from './module/joinAndLeaveChat/joinAndLeaveBot';
 import { getAllChats } from './db/helpers';
-import { handlerDeleteUser, deleteUser } from './module/userManagement/delete';
+import {
+  handlerDeleteUser,
+  deleteUser,
+  handlerDeleteUserFromChat,
+  deleteChatMebers,
+} from './module/userManagement/delete';
 import { commandShowListChat } from './module/chatList/createChatList';
-import { setUser } from './module/userManagement/setUser';
+import { handleSetUserToChat, setUser } from './module/userManagement/setUser';
 import { createListUsers } from './module/userManagement/helper';
 import { handlerEditStatusSendMrUser } from './module/userManagement/EditStatusSendMr';
+import { handlerAddUserToChat } from './module/userManagement/handlerAddUserToChat';
 
 function initialState(): SessionData {
   return {
@@ -100,7 +106,7 @@ export class BotInstance {
     );
 
     // дергаем по пресету
-    this.bot.hears(new RegExp(`!https://git`), hearsPresetMR);
+    // this.bot.hears(new RegExp(`!https://git`), hearsPresetMR);
 
     this.bot.hears('del-msg-bot', hearsDelMsgBot);
   }
@@ -145,8 +151,17 @@ export class BotInstance {
           case 'delete':
             createListUsers(ctx, 'delete', chatInternalId);
             break;
+          case 'deleteFromChat':
+            createListUsers(ctx, 'deleteFromChat', chatInternalId);
+            break;
           case 'setUser':
             handleCommand(ctx, KeyCommand.setUser);
+            break;
+          case 'addUserToChat':
+            createListUsers(ctx, 'addUserToChat', chatInternalId);
+            break;
+          case 'completedTasks':
+            commandCompletedTasks(ctx, chatInternalId);
             break;
           case 'editChatConfig':
             actionEditConfig(
@@ -187,9 +202,46 @@ export class BotInstance {
       }),
     );
 
-    this.bot.callbackQuery(/^delete:\d/, handlerDeleteUser);
+    this.bot.callbackQuery(/^delete:\d/, (ctx: TCallbackQueryContext) =>
+      handlerDeleteUser({
+        ctx,
+        text: 'Вы уверены, что хотите удалить этого пользователя',
+        action: 'delete',
+      }),
+    );
+
+    this.bot.callbackQuery(
+      KeyCommand.deleteFromChat,
+      (ctx: TCallbackQueryContext) =>
+        commandShowListChat({
+          ctx,
+          text: 'Выберите чат проекта откуда надо удлаить польвателя ?',
+          action: 'deleteFromChat',
+        }),
+    );
+
+    this.bot.callbackQuery(/^deleteFromChat:\d/, (ctx: TCallbackQueryContext) =>
+      handlerDeleteUser({
+        ctx,
+        text: 'Вы уверены, что хотите удалить этого пользователя из чата ? ',
+        action: 'deleteFromChat',
+      }),
+    );
 
     // ======
+
+    this.bot.callbackQuery(
+      KeyCommand.addUserToChat,
+      (ctx: TCallbackQueryContext) =>
+        commandShowListChat({
+          ctx,
+          text: 'Выберите чат проекта, в который хотите добавить пользователя.',
+          action: 'addUserToChat',
+        }),
+    );
+
+    this.bot.callbackQuery(/^addUserToChat:\d/, handlerAddUserToChat);
+
     this.bot.callbackQuery(/^add_config_chat:-?\d+/, async (ctx) => {
       const chatId = String(ctx.callbackQuery.data.split(':')[1]);
 
@@ -223,6 +275,10 @@ export class BotInstance {
           await deleteUser(id);
           await createListUsers(ctx, 'delete', chatInternalId);
           break;
+        case KeyCommand.deleteFromChat:
+          await deleteChatMebers(id, chatInternalId);
+          await createListUsers(ctx, 'deleteFromChat', chatInternalId);
+          break;
         case KeyCommand.deletePreset:
           await deletePreset(ctx);
           await commandUpdatePreset(ctx);
@@ -244,6 +300,9 @@ export class BotInstance {
         case KeyCommand.delete:
           createListUsers(ctx, 'delete', chatInternalId);
           break;
+        case KeyCommand.deleteFromChat:
+          createListUsers(ctx, 'deleteFromChat', chatInternalId);
+          break;
         case KeyCommand.deletePreset:
           commandUpdatePreset(ctx);
           break;
@@ -261,7 +320,8 @@ export class BotInstance {
 
     this.bot.callbackQuery(/^preset:@*/, commandButtonPreset);
 
-    // this.bot.callbackQuery(/^setUser:@*/, handleSetUserToChat);
+    // это создание юзера когда его добавляют в чат
+    this.bot.callbackQuery(/^setUser:@*/, handleSetUserToChat);
 
     this.bot.callbackQuery(KeyCommand.backToMenu, async (ctx) => {
       const keybord = isAdminUser(ctx.from?.id || 0)
@@ -304,7 +364,12 @@ export class BotInstance {
     });
 
     this.bot.command([KeyCommand.completedTasks], async (ctx: MyContext) =>
-      commandCompletedTasks(ctx),
+      commandShowListChat({
+        ctx,
+        text: 'Выберите чат проекта, в который посмотреть выполненные задачи.',
+        action: 'completedTasks',
+        modKeybord: 'reply',
+      }),
     );
 
     this.bot.command([KeyCommand.menu], async (ctx: MyContext) => {

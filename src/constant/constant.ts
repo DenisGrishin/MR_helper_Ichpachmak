@@ -3,6 +3,8 @@ import { ChatСonfig } from '../db';
 export enum KeyCommand {
   setUser = 'set_user',
   delete = 'delete_user',
+  addUserToChat = 'add_user_to_chat',
+  deleteFromChat = 'delete_from_chat',
   updatePreset = 'update_preset',
   allUser = 'all_user',
   showPreset = 'show_preset',

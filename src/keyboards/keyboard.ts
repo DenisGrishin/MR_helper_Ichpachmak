@@ -16,12 +16,19 @@ export const userKeyboardMenu = new InlineKeyboard()
 
 export const adminKeyboardMenu = new InlineKeyboard()
   .text('Активировать пользователя', KeyCommand.editStatusSendMRUser)
-  .text('Удалить пользователя', KeyCommand.delete)
   .row()
-  .text('Обновить пресет', KeyCommand.updatePreset)
+  .text('Добавить пользователя в чат', KeyCommand.addUserToChat)
+  .row()
+  .text('⚠️ Удалить пользователя', KeyCommand.delete)
+  .row()
+  .text('Удалить пользователя из чата', KeyCommand.deleteFromChat)
+  .row()
   .text('Список всех пользователей', KeyCommand.allUser)
+  // .row()
+  // .text('Обновить пресет', KeyCommand.updatePreset)
   .row()
   .text('Конфигурации чатов', KeyCommand.chatСonfig)
+  .row()
   .url(
     'Документация',
     'https://wiki.yandex.ru/napravlenija-kompanii/frontend/spisok-botov/mr-helper/',
@@ -61,6 +68,10 @@ export const chunkInlineKeyboardChats = ({
 
     keyboardButtonRows.push(sliceChat);
   }
+
+  keyboardButtonRows.push([
+    InlineKeyboard.text('< Назад', KeyCommand.backToMenu),
+  ]);
 
   return keyboardButtonRows;
 };

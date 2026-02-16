@@ -1,6 +1,6 @@
 import { ChatСonfig } from '../db';
 import { IUser, Users } from '../db/users';
-import { findUsersInCurrentChat } from '../helper/helper';
+
 import { MyContext } from '../type';
 import {
   fetchMR,
@@ -24,10 +24,10 @@ export const hearsActiveMR = async (
 
   const chatInternalId = await ChatСonfig.findByTelegramId(chatId);
 
-  const usersInCurrentChat: IUser[] = await Users.findUsersByChatId(
+  const usersInCurrentChat = await Users.findUsersByChatId(
     chatInternalId.id,
     ['name'],
-    ['isActive'],
+    ['isActive', 'completedTasks'],
   );
 
   const authorMR = `@${ctx?.from?.username}`;
@@ -53,13 +53,21 @@ export const hearsActiveMR = async (
 
   await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
 
-  // if (dataAuthorMR && taskNumber && false) {
-  //   await taskService.recordCompletedTask(taskNumber, dataAuthorMR, ctx);
-  //   await taskService.recordTask(
-  //     taskNumber === 'UNKNOWN' ? 'UNKNOWN' : MR.source_branch,
-  //     dataAuthorMR.id,
-  //   );
-  // }
+  console.log(
+    'usersInCurrentChat?.completedTasks ==> ',
+    usersInCurrentChat?.completedTasks,
+  );
+  if (taskNumber && usersInCurrentChat?.completedTasks) {
+    taskService.recordCompletedTask({
+      taskNumber,
+      completedTasks: JSON.parse(usersInCurrentChat?.completedTasks),
+      ctx,
+    });
+    // await taskService.recordTask(
+    //   taskNumber === 'UNKNOWN' ? 'UNKNOWN' : MR.source_branch,
+    //   dataAuthorMR.id,
+    // );
+  }
 
   try {
     // @ts-ignore

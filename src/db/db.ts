@@ -31,16 +31,17 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS chatMembers (
       id INTEGER PRIMARY KEY,
-      userId INTEGER,
-      chatId INTEGER,
+      userInternalId INTEGER,
+      chatInternalId INTEGER,
       isActive INTEGER DEFAULT 0 CHECK (isActive IN (0,1)),
       preset TEXT DEFAULT '[]',
       completedTasks TEXT DEFAULT '[]',
+      verificationTasks TEXT DEFAULT '[]',
       idGitLab INTEGER,
 
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (chatId) REFERENCES chatConfig(id) ON DELETE RESTRICT,
-      UNIQUE(userId, chatId)
+      FOREIGN KEY (userInternalId) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (chatInternalId) REFERENCES chatConfig(id) ON DELETE RESTRICT,
+      UNIQUE(userInternalId, chatInternalId)
     )
   `);
 });

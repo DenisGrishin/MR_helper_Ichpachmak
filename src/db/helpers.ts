@@ -56,7 +56,6 @@ export async function syncUsersWithDb(
   users?: string[],
 ) {
   const findUsersDb = await findUsersByName(users || [], chatInternalId);
-  console.log('findUsersDb ==> ', findUsersDb);
 
   const usersNameBd = findUsersDb?.map((user) => user.name);
 
@@ -69,15 +68,4 @@ export async function syncUsersWithDb(
   }
 
   return { notFindUsersBd, usersNameBd };
-}
-
-export function findUsersByIdGitlab(idGitLab: number[]) {
-  try {
-    const res = Users.findByIdGitLabs(idGitLab);
-
-    return res;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
 }
