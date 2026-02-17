@@ -3,16 +3,13 @@ import { Bot, GrammyError, HttpError, session } from 'grammy';
 import { hydrate } from '@grammyjs/hydrate';
 import {
   handleCommand,
-  commandAllUser,
   commandUpdatePreset,
   commandDeletePreset,
   deletePreset,
   commandButtonPreset,
-  CommandDispatcher,
-  commandCompletedTasks,
 } from './command';
 import { LIST_MY_COMMAND } from './command/constant';
-import { hearsPresetMR, hearsActiveMR, hearsDelMsgBot } from './hears';
+import { hearsActiveMR, hearsDelMsgBot } from './hears';
 import { MyContext, SessionData, TCallbackQueryContext } from './type';
 import { adminKeyboardMenu, userKeyboardMenu } from './keyboards/keyboard';
 import { ChatСonfig } from './db';
@@ -26,7 +23,6 @@ import { getAllChats } from './db/helpers';
 import {
   handlerDeleteUser,
   deleteUser,
-  handlerDeleteUserFromChat,
   deleteChatMebers,
 } from './module/userManagement/delete';
 import { commandShowListChat } from './module/chatList/createChatList';
@@ -34,6 +30,8 @@ import { handleSetUserToChat, setUser } from './module/userManagement/setUser';
 import { createListUsers } from './module/userManagement/helper';
 import { handlerEditStatusSendMrUser } from './module/userManagement/EditStatusSendMr';
 import { handlerAddUserToChat } from './module/userManagement/handlerAddUserToChat';
+import { showCompletedTasks } from './module/TaskService/showCompletedTasks';
+import { showAllUser } from './module/userManagement/showAllUser';
 
 function initialState(): SessionData {
   return {
@@ -49,14 +47,11 @@ function initialState(): SessionData {
 
 export class BotInstance {
   bot: Bot<MyContext>;
-  commandDispatcherInstance;
   gitLabTokens: Record<string, string | null>;
 
   constructor({ bot }: { bot: Bot<MyContext> }) {
     this.bot = bot;
     this.gitLabTokens = {};
-
-    this.commandDispatcherInstance = new CommandDispatcher();
 
     this.bot.use(session({ initial: initialState }));
     //плагин для интерактивного меню
@@ -131,6 +126,7 @@ export class BotInstance {
     this.bot.callbackQuery(
       /^selectChat:-?\d+/,
       (ctx: TCallbackQueryContext) => {
+        ctx.answerCallbackQuery().catch(() => {});
         const chatInternalId = Number(ctx.callbackQuery.data.split(':')[1]);
 
         const chatId = Number(ctx.callbackQuery.data.split(':')[2]);
@@ -161,7 +157,10 @@ export class BotInstance {
             createListUsers(ctx, 'addUserToChat', chatInternalId);
             break;
           case 'completedTasks':
-            commandCompletedTasks(ctx, chatInternalId);
+            showCompletedTasks(ctx, chatInternalId);
+            break;
+          case 'allUser':
+            showAllUser(ctx, chatInternalId);
             break;
           case 'editChatConfig':
             actionEditConfig(
@@ -172,8 +171,6 @@ export class BotInstance {
           default:
             break;
         }
-
-        ctx.answerCallbackQuery();
       },
     );
 
@@ -243,7 +240,7 @@ export class BotInstance {
     this.bot.callbackQuery(/^addUserToChat:\d/, handlerAddUserToChat);
 
     this.bot.callbackQuery(/^add_config_chat:-?\d+/, async (ctx) => {
-      const chatId = String(ctx.callbackQuery.data.split(':')[1]);
+      const chatId = Number(ctx.callbackQuery.data.split(':')[1]);
 
       const filedBD = String(
         ctx.callbackQuery.data.split(':')[2],
@@ -262,7 +259,13 @@ export class BotInstance {
 
     this.bot.callbackQuery(KeyCommand.deletePreset, commandDeletePreset);
 
-    this.bot.callbackQuery(KeyCommand.allUser, commandAllUser);
+    this.bot.callbackQuery(KeyCommand.allUser, (ctx: TCallbackQueryContext) =>
+      commandShowListChat({
+        ctx,
+        text: 'Выберите чат проекта, в который хотите посмотреть пользователя',
+        action: 'allUser',
+      }),
+    );
 
     // todo вынести в отдельные фукции yesAnswer noAnswer
     this.bot.callbackQuery(/^yes_answer:\d/, async (ctx) => {
@@ -406,20 +409,15 @@ export class BotInstance {
       const chatInternalId = ctx.session?.chatInternalId || null;
 
       const chatTitle = ctx.session?.chatTitle;
+
       const filedUpdateBD = ctx.session?.filedUpdateBD as keyof ChatСonfig;
 
       switch (ctx.session.keyCommand) {
         case KeyCommand.setUser:
           setUser(ctx, Number(chatInternalId), chatTitle || '');
           break;
-        case KeyCommand.createTasksListTEST:
-          this.commandDispatcherInstance.createTasksList(ctx, 'test');
-          break;
-        case KeyCommand.createTasksListSTAGE:
-          this.commandDispatcherInstance.createTasksList(ctx, 'stage');
-          break;
         case KeyCommand.addConfigChat:
-          addConfigChat(ctx, chatInternalId, filedUpdateBD);
+          addConfigChat(ctx, chatId, filedUpdateBD);
           return;
         default:
           console.error(

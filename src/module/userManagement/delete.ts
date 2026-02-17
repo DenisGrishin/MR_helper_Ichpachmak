@@ -1,5 +1,5 @@
 import { KeyCommand } from '../../constant/constant';
-import { findUserById, Users } from '../../db';
+import { Users } from '../../db';
 import { createKeyboardAskUserConfirmation } from '../../keyboards/keyboard';
 import { TCallbackQueryContext } from '../../type';
 
@@ -16,7 +16,7 @@ export const handlerDeleteUser = async ({
   const userInternalId = Number(ctx.callbackQuery.data.split(':')[1]);
   const chatInternalId = Number(ctx.callbackQuery.data.split(':')[2]);
 
-  const user = await Users.findUser(userInternalId, (err, users) => {
+  const user: any = await Users.findUser(userInternalId, (err, users) => {
     if (err) {
       console.error(err);
     } else if (users && users.length > 0) {

@@ -23,6 +23,7 @@ db.serialize(() => {
       id INTEGER PRIMARY KEY,
       chatId INTEGER UNIQUE,
       chatTitle TEXT,
+      gitBaseUrl TEXT,
       tokenGitLab TEXT UNIQUE
     )
   `);
@@ -52,3 +53,6 @@ export default db;
 // glpat-OfUHDUy-aRE9WSQClzbk6m86MQp1OjhmamsyCw.01.120n0o66h
 // test 2
 // glpat-hxZ7jHXUyo2zjuN_sYiHi286MQp1OmhtdnlmCw.01.120y7cj8y
+
+// BOT_API_KEY=7758173769:AAEfm-lm4uOLAeOnYDQCbIyn0FtFrTdv7VM
+// BASE_URL=gitlab.com

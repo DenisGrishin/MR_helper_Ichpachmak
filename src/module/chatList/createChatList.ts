@@ -2,13 +2,7 @@ import { InlineKeyboard } from 'grammy';
 import { getAllChats } from '../../db/helpers';
 import { CommandAction, modKeybord } from '../../keyboards/type';
 import { MyContext, TCallbackQueryContext } from '../../type';
-import {
-  adminKeyboardMenu,
-  chunkInlineKeyboardChats,
-  userKeyboardMenu,
-} from '../../keyboards/keyboard';
-import { findChatByChatId } from '../../db';
-import { isAdminUser } from '../../helper/helper';
+import { chunkInlineKeyboardChats } from '../../keyboards/keyboard';
 
 export const commandShowListChat = async ({
   ctx,
@@ -21,6 +15,10 @@ export const commandShowListChat = async ({
   text: string;
   action: CommandAction;
 }) => {
+  // todo показать чаты где находиться юзер
+  // const user = await Users.findByUser(`@${ctx.from?.username}`);
+  // const listChat = await Users.findUserChats(user.id);
+
   const listChat = await getAllChats();
 
   if (!listChat.length) {
@@ -50,19 +48,4 @@ export const commandShowListChat = async ({
       });
       break;
   }
-};
-
-export const commandMenuChat = async (ctx: TCallbackQueryContext) => {
-  const id = Number(ctx.callbackQuery.data.split(':')[1]);
-  const chat = await findChatByChatId(`-${id}`);
-
-  const keybord = isAdminUser(ctx.from?.id || 0)
-    ? adminKeyboardMenu
-    : userKeyboardMenu;
-
-  ctx.callbackQuery.message?.editText(`Меню чата: ${chat?.chatTitle}`, {
-    reply_markup: keybord,
-  });
-
-  ctx.answerCallbackQuery();
 };

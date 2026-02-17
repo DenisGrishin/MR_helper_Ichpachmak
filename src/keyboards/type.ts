@@ -6,7 +6,8 @@ export type CommandAction =
   | 'editChatConfig'
   | 'deleteFromChat'
   | 'addUserToChat'
-  | 'completedTasks';
+  | 'completedTasks'
+  | 'allUser';
 
 export type nameCallbackQuery = 'selectChat' | 'newUser';
 

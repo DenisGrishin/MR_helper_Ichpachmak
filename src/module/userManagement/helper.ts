@@ -64,7 +64,9 @@ const getListUsers = async (chatInternalId: number, isAll: boolean = false) => {
     );
     const allUsers = await Users.all();
 
-    const selectChatUsersId = selectChatUsers.map((user) => user.id);
+    const selectChatUsersId = (selectChatUsers as any).map(
+      (user: any) => user.id,
+    );
 
     return allUsers.map((user) => {
       if (selectChatUsersId.includes(user.id)) {

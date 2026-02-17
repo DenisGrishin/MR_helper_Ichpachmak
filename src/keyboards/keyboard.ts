@@ -81,14 +81,14 @@ export const chunkInlineKeyboardUser = ({
   action,
   chatInternalId,
 }: {
-  list: IUser[];
+  list: any;
   action: CommandAction;
   chatInternalId: number;
 }) => {
   const keyboardButtonRows: any[] = [];
 
   for (let i = 0; i < list.length; i += 3) {
-    const sliceUser = list.slice(i, i + 3).map((user) => {
+    const sliceUser = list.slice(i, i + 3).map((user: any) => {
       return InlineKeyboard.text(
         `${user.isActive ? '✅' : '❌'} ${user.name}`,
         `${action}:${user.id}:${chatInternalId}`,

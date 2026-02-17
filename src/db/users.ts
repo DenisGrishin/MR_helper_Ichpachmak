@@ -52,17 +52,17 @@ export class Users {
   }
 
   static findUser(
-    id: number,
+    userInternalId: number,
     cb: (err: Error | null, users?: IUser[]) => void,
-  ): Promise<IUser | null> {
+  ) {
     return new Promise((resolve, reject) => {
-      if (!id && id !== 0) {
+      if (!userInternalId && userInternalId !== 0) {
         return reject(new Error('Вы не отправили id'));
       }
 
       const sql = `SELECT * FROM users WHERE id = ?`;
 
-      db.get(sql, [id], (err, row) => {
+      db.get(sql, [userInternalId], (err, row) => {
         // db.get возвращает один объект, а не массив
         if (err) return reject(err);
         resolve(row || null);
@@ -71,7 +71,7 @@ export class Users {
   }
 
   // new
-  static findByUser(name: string): Promise<IChat> {
+  static findByUser(name: string) {
     return new Promise((resolve, reject) => {
       if (!name) {
         return reject(new Error('Name не передан'));
@@ -79,7 +79,7 @@ export class Users {
 
       const sql = `SELECT * FROM users WHERE name = ?`;
 
-      db.get(sql, name, (err, row: IChat) => {
+      db.get(sql, name, (err, row) => {
         if (err) return reject(err);
         resolve(row);
       });
@@ -87,10 +87,7 @@ export class Users {
   }
 
   // new
-  static findUsersByName(
-    names: string[],
-    chatInternalId: number,
-  ): Promise<IUser[]> {
+  static findUsersByName(names: string[], chatInternalId: number) {
     return new Promise((resolve, reject) => {
       if (!names.length) {
         return reject(new Error('Вы не отправили пользователей'));
@@ -118,11 +115,13 @@ export class Users {
     chatInternalId: number,
     userFields: (keyof IUser)[] = ['id', 'name'], // поля из users
     memberFields: (keyof any)[] = ['isActive', 'preset', 'completedTasks'], // поля из chatMembers
-  ): Promise<any[]> {
+  ) {
     return new Promise((resolve, reject) => {
       // Формируем SELECT
-      const userSelect = userFields.map((f) => `u.${f}`).join(', ');
-      const memberSelect = memberFields.map((f) => `cm.${f}`).join(', ');
+      const userSelect = userFields.map((f) => `u.${String(f)}`).join(', ');
+      const memberSelect = memberFields
+        .map((f) => `cm.${String(f)}`)
+        .join(', ');
       const selectClause = [userSelect, memberSelect]
         .filter(Boolean)
         .join(', ');
@@ -153,6 +152,23 @@ export class Users {
       db.get(sql, [userId, chatInternalId], (err, row) => {
         if (err) return reject(err);
         resolve(row || null); // null, если запись не найдена
+      });
+    });
+  }
+
+  // new
+  static findUserChats(userId: number): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+      SELECT cc.*
+      FROM chatMembers cm
+      JOIN chatConfig cc ON cc.id = cm.chatInternalId
+      WHERE cm.userInternalId = ?
+    `;
+
+      db.all(sql, [userId], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows); // массив чатов
       });
     });
   }
