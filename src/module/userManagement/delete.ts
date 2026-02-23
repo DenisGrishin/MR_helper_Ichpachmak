@@ -1,5 +1,6 @@
 import { KeyCommand } from '../../constant/constant';
 import { Users } from '../../db';
+import { ChatMembers } from '../../db/chatMembers';
 import { createKeyboardAskUserConfirmation } from '../../keyboards/keyboard';
 import { TCallbackQueryContext } from '../../type';
 
@@ -10,13 +11,13 @@ export const handlerDeleteUser = async ({
 }: {
   ctx: TCallbackQueryContext;
   text: string;
-  action: 'delete' | 'deleteFromChat';
+  action: 'delete';
 }) => {
   ctx.answerCallbackQuery();
   const userInternalId = Number(ctx.callbackQuery.data.split(':')[1]);
   const chatInternalId = Number(ctx.callbackQuery.data.split(':')[2]);
 
-  const user: any = await Users.findUser(userInternalId, (err, users) => {
+  const user: any = await Users.findUser(userInternalId, 'id', (err, users) => {
     if (err) {
       console.error(err);
     } else if (users && users.length > 0) {
@@ -47,5 +48,5 @@ export const deleteChatMebers = async (
 ) => {
   if (!userInternalId) throw new Error('Нет такого userInternalId');
 
-  await Users.deleteChatMember(userInternalId, chatInternalId);
+  await ChatMembers.deleteChatMember(userInternalId, chatInternalId);
 };

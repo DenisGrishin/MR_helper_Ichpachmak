@@ -1,7 +1,6 @@
 import { InlineKeyboard } from 'grammy';
 
-import { IUser } from '../db';
-import { IChat } from '../db/chatConfig/chatСonfig';
+import { IChat } from '../db/chatСonfig';
 import { CommandAction, nameCallbackQuery } from './type';
 import { KeyCommand } from '../constant/constant';
 
@@ -16,19 +15,12 @@ export const userKeyboardMenu = new InlineKeyboard()
 
 export const adminKeyboardMenu = new InlineKeyboard()
   .text('Активировать пользователя', KeyCommand.editStatusSendMRUser)
-  .row()
-  .text('Добавить пользователя в чат', KeyCommand.addUserToChat)
-  .row()
   .text('⚠️ Удалить пользователя', KeyCommand.delete)
   .row()
-  .text('Удалить пользователя из чата', KeyCommand.deleteFromChat)
-  .row()
   .text('Список всех пользователей', KeyCommand.allUser)
-  // .row()
-  // .text('Обновить пресет', KeyCommand.updatePreset)
+  .text('Обновить пресет', KeyCommand.updatePreset)
   .row()
   .text('Конфигурации чатов', KeyCommand.chatСonfig)
-  .row()
   .url(
     'Документация',
     'https://wiki.yandex.ru/napravlenija-kompanii/frontend/spisok-botov/mr-helper/',
@@ -80,54 +72,42 @@ export const chunkInlineKeyboardUser = ({
   list,
   action,
   chatInternalId,
+  authorData,
 }: {
   list: any;
   action: CommandAction;
   chatInternalId: number;
+  authorData?: any;
 }) => {
   const keyboardButtonRows: any[] = [];
 
+  const preset = JSON.parse(authorData?.preset || '[]');
+
   for (let i = 0; i < list.length; i += 3) {
-    const sliceUser = list.slice(i, i + 3).map((user: any) => {
-      return InlineKeyboard.text(
-        `${user.isActive ? '✅' : '❌'} ${user.name}`,
-        `${action}:${user.id}:${chatInternalId}`,
-      );
-    });
+    const sliceUser = list
+      .slice(i, i + 3)
+      .filter((el: any) => el.name !== authorData?.name)
+      .map((user: any) => {
+        const queryParams = `${action}:${user.id}:${chatInternalId}`;
+
+        if (action === 'updatePreset') {
+          return InlineKeyboard.text(
+            `${preset.includes(user.name) ? '✅' : '❌'} ${user.name}`,
+            `${queryParams}:${user.name}:${authorData?.id}`,
+          );
+        }
+
+        return InlineKeyboard.text(
+          `${user.isActive ? '✅' : '❌'} ${user.name}`,
+          queryParams,
+        );
+      });
 
     keyboardButtonRows.push(sliceUser);
   }
 
   keyboardButtonRows.push([
     InlineKeyboard.text('< Назад', KeyCommand.backToMenu),
-  ]);
-
-  return keyboardButtonRows;
-};
-
-export const chunkInlineKeyboardPreset = ({
-  list,
-  preset,
-}: {
-  list: IUser[];
-  preset: string[];
-}) => {
-  const keyboardButtonRows: any[] = [];
-
-  for (let i = 0; i < list.length; i += 3) {
-    const sliceUser = list.slice(i, i + 3).map((user) => {
-      return InlineKeyboard.text(
-        `${preset.includes(user.name) ? '✅' : '❌'} ${user.name}`,
-        `preset-${user.name}`,
-      );
-    });
-
-    keyboardButtonRows.push(sliceUser);
-  }
-
-  keyboardButtonRows.push([
-    InlineKeyboard.text('< Назад', KeyCommand.backToMenu),
-    InlineKeyboard.text('Удалить свой пресет', KeyCommand.deletePreset),
   ]);
 
   return keyboardButtonRows;

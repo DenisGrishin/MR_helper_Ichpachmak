@@ -1,14 +1,9 @@
 import { ChatСonfig } from '../db';
-import { Users } from '../db/users';
+import { ChatMembers } from '../db/chatMembers';
 import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 
 import { MyContext } from '../type';
-import {
-  fetchMR,
-  getTaskNumber,
-  messageGenerator,
-  taskService,
-} from './helper';
+import { fetchMR, getTaskNumber, messageGenerator } from './helper';
 
 // TODO вынести отдельно чтоб при старте сохрнять ативных пользватлей
 export const hearsActiveMR = async (
@@ -23,9 +18,14 @@ export const hearsActiveMR = async (
     throw new Error('chatId отсутствует в сессии');
   }
 
+  if (!gitLabTokens[chatId]) {
+    ctx.reply('Добавьте токен для GitLab');
+    throw new Error('Нет токена для GitLab');
+  }
+
   const chatInternalId = await ChatСonfig.findByTelegramId(chatId);
 
-  const usersInCurrentChat: any = await Users.findUsersByChatId(
+  const usersInCurrentChat: any = await ChatMembers.findChatMembersWithFields(
     chatInternalId.id,
     ['name', 'id'],
     ['isActive', 'completedTasks'],
@@ -34,7 +34,9 @@ export const hearsActiveMR = async (
   const authorMR = `@${ctx?.from?.username}`;
 
   const usersTags = usersInCurrentChat
-    .map((u: any) => u.name)
+    .map((u: any) => {
+      if (u.isActive) return u.name;
+    })
     .filter((el: any) => el !== undefined && el !== authorMR)
     .join(' ');
 

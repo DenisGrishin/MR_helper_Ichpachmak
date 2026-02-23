@@ -3,51 +3,8 @@ import { chunkInlineKeyboardUser } from '../../keyboards/keyboard';
 import { TCallbackQueryContext } from '../../type';
 import { CommandAction } from '../../keyboards/type';
 import { Users } from '../../db';
-
-interface IMessageBotArgs {
-  messageId: number;
-  successValue: string[];
-  usersToUpdate: string[];
-  warningValue?: string[];
-  ctx: Context;
-  textSuccess?: string;
-  textWarning?: string;
-  textUpdateUser?: string;
-}
-
-export const replyMessageBot = async ({
-  messageId,
-  successValue,
-  usersToUpdate,
-  warningValue,
-  ctx,
-  textSuccess = '',
-  textWarning = '',
-  textUpdateUser = '',
-}: IMessageBotArgs) => {
-  const isWarning = !!warningValue?.length;
-  const isSuccess = !!successValue.length;
-  const isUpdate = !!usersToUpdate.length;
-
-  const messageSuccessNameDb = isSuccess
-    ? `✅ ${textSuccess}: ${successValue.join(', ')}`
-    : '';
-
-  const messageWarningNameDb = isWarning
-    ? `⚠️ ${textWarning}: ${warningValue?.join(', ')}`
-    : '';
-
-  const messageUsersToUpdateNameDb = isUpdate
-    ? `🆙 ${textUpdateUser}: ${usersToUpdate?.join(', ')}`
-    : '';
-
-  await ctx.reply(
-    `${messageSuccessNameDb}\n\n${messageWarningNameDb}\n\n${messageUsersToUpdateNameDb}`,
-    {
-      reply_parameters: { message_id: messageId },
-    },
-  );
-};
+import { ChatMembers } from '../../db/chatMembers';
+import { KeyCommand } from '../../constant/constant';
 
 export const showErrorMsg = async (msgError: string, ctx: Context) => {
   await ctx.reply(`⚠️ ${msgError}`, {
@@ -57,7 +14,7 @@ export const showErrorMsg = async (msgError: string, ctx: Context) => {
 
 const getListUsers = async (chatInternalId: number, isAll: boolean = false) => {
   if (isAll) {
-    const selectChatUsers = await Users.findUsersByChatId(
+    const selectChatUsers = await ChatMembers.findChatMembersWithFields(
       chatInternalId,
       ['id', 'name'],
       [],
@@ -76,10 +33,10 @@ const getListUsers = async (chatInternalId: number, isAll: boolean = false) => {
     });
   }
 
-  return await Users.findUsersByChatId(
+  return await ChatMembers.findChatMembersWithFields(
     chatInternalId,
     ['id', 'name'],
-    ['isActive'],
+    ['isActive', 'preset'],
   );
 };
 
@@ -88,13 +45,28 @@ export const createListUsers = async (
   action: CommandAction,
   chatInternalId: number,
 ) => {
-  const listUsers = await getListUsers(
-    chatInternalId,
-    action === 'addUserToChat',
-  );
+  const listUsers = await getListUsers(chatInternalId);
 
   if (!chatInternalId) {
     throw new Error('chatId отсутствует в сессии');
+  }
+
+  const authorData = (listUsers as any).find(
+    (el: any) => el.name === `@${ctx.from.username}`,
+  );
+
+  if (!authorData) {
+    console.log(`Вас ${ctx.from.username} нет в этом чате`);
+    await ctx.callbackQuery.message?.editText(
+      `Вас @${ctx.from.username} нет в этом чате`,
+      {
+        reply_markup: new InlineKeyboard().text(
+          '< Назад',
+          KeyCommand.backToMenu,
+        ),
+      },
+    );
+    return;
   }
 
   const keyboardUser = InlineKeyboard.from(
@@ -102,10 +74,11 @@ export const createListUsers = async (
       list: listUsers,
       action,
       chatInternalId,
+      authorData,
     }),
   );
 
-  let messageText = `<b>Чат ${ctx.session.chatTitle?.toUpperCase()}</b>\n\n`;
+  let messageText = `Чат ${ctx.session.chatTitle?.toUpperCase()}\n\n`;
 
   switch (action) {
     case 'editStatusSendMR':
@@ -121,17 +94,12 @@ export const createListUsers = async (
         'ВНИМАНИЕ!!! ПОЛЬЗОВАТЕЛЬ УДАЛИТЬСЯ ИЗ ВСЕХ ЧАТОВ.';
       break;
 
-    case 'deleteFromChat':
-      messageText += 'Нажмите на пользователя, чтобы удалить его из чата.';
-      break;
-
-    case 'addUserToChat':
+    case 'updatePreset':
       messageText +=
-        'Нажмите на пользователя, чтобы добавить его в чат.\n' +
-        '✅ Пользователь уже есть в этом чате.\n' +
-        '❌ Его нет в чате.';
+        'Нажмите на пользователя, чтобы добавить в пресет.\n\n' +
+        '✅ Пользователь добавлен в пресет.\n' +
+        '❌ Пользоветель не добавлен в пресет.';
       break;
-
     default:
       console.warn('Неизвестное действие:', action);
       break;
@@ -139,7 +107,6 @@ export const createListUsers = async (
 
   await ctx.callbackQuery.message?.editText(messageText, {
     reply_markup: keyboardUser,
-    parse_mode: 'HTML',
   });
 
   ctx.answerCallbackQuery();

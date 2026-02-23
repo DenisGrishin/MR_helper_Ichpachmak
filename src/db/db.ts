@@ -1,3 +1,4 @@
+// @ts-ignore
 import sqlite3 from 'sqlite3';
 
 const dbName = `data/late.sqlite`;
@@ -25,7 +26,7 @@ db.serialize(() => {
       chatTitle TEXT,
       gitBaseUrl TEXT,
       tokenGitLab TEXT UNIQUE
-    )
+    ) 
   `);
 
   // таблица связей пользователя с чатом
@@ -39,9 +40,11 @@ db.serialize(() => {
       completedTasks TEXT DEFAULT '[]',
       verificationTasks TEXT DEFAULT '[]',
       idGitLab INTEGER,
+      isAdmin INTEGER DEFAULT 0 CHECK (isAdmin IN (0,1)),
+
 
       FOREIGN KEY (userInternalId) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (chatInternalId) REFERENCES chatConfig(id) ON DELETE RESTRICT,
+      FOREIGN KEY (chatInternalId) REFERENCES chatConfig(id),
       UNIQUE(userInternalId, chatInternalId)
     )
   `);

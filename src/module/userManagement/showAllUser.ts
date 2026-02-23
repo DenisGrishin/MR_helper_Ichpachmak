@@ -1,4 +1,4 @@
-import { Users } from '../../db';
+import { ChatMembers } from '../../db/chatMembers';
 import { TCallbackQueryContext } from '../../type';
 
 export const showAllUser = async (
@@ -6,7 +6,7 @@ export const showAllUser = async (
   chatInternalId: number,
 ) => {
   ctx.answerCallbackQuery();
-  const usersInCurrentChat: any = await Users.findUsersByChatId(
+  const usersInCurrentChat: any = await ChatMembers.findChatMembersWithFields(
     chatInternalId,
     ['name'],
     ['isActive'],

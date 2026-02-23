@@ -1,4 +1,5 @@
 import { Users } from '../../db';
+import { ChatMembers } from '../../db/chatMembers';
 
 export const recordCompletedTask = async ({
   taskNumber,
@@ -16,7 +17,7 @@ export const recordCompletedTask = async ({
     return;
   }
 
-  Users.updateChatMember(userInternalId, chatInternalId, {
+  ChatMembers.updateField(userInternalId, chatInternalId, {
     completedTasks: JSON.stringify([...completedTasks, taskNumber]),
   });
 };

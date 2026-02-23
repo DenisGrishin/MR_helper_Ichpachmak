@@ -1,37 +1,29 @@
 import 'dotenv/config';
-import { Bot, GrammyError, HttpError, session } from 'grammy';
+import { Bot, session } from 'grammy';
 import { hydrate } from '@grammyjs/hydrate';
-import {
-  handleCommand,
-  commandUpdatePreset,
-  commandDeletePreset,
-  deletePreset,
-  commandButtonPreset,
-} from './command';
+
 import { LIST_MY_COMMAND } from './command/constant';
-import { hearsActiveMR, hearsDelMsgBot } from './hears';
+import { hearsActiveMR, hearsDelMsgBot, hearsPresetMR } from './hears';
 import { MyContext, SessionData, TCallbackQueryContext } from './type';
 import { adminKeyboardMenu, userKeyboardMenu } from './keyboards/keyboard';
 import { ChatСonfig } from './db';
 
-import { addConfigChat } from './module/chatConfig/add';
-import { KeyCommand, LIST_FIELD_CHAT_CONFIG } from './constant/constant';
+import { addConfigChat, handlerAddConfigChat } from './module/chatConfig/add';
+import { KeyCommand } from './constant/constant';
 import { isAdminUser } from './helper/helper';
-import { actionEditConfig } from './module/chatConfig/edit';
-import { joinAndLeaveBot } from './module/joinAndLeaveChat/joinAndLeaveBot';
-import { getAllChats } from './db/helpers';
-import {
-  handlerDeleteUser,
-  deleteUser,
-  deleteChatMebers,
-} from './module/userManagement/delete';
+import { joinBot, leaveBot } from './module/joinAndLeaveChat/joinAndLeaveBot';
+import { handlerDeleteUser, deleteUser } from './module/userManagement/delete';
 import { commandShowListChat } from './module/chatList/createChatList';
 import { handleSetUserToChat, setUser } from './module/userManagement/setUser';
 import { createListUsers } from './module/userManagement/helper';
-import { handlerEditStatusSendMrUser } from './module/userManagement/EditStatusSendMr';
-import { handlerAddUserToChat } from './module/userManagement/handlerAddUserToChat';
-import { showCompletedTasks } from './module/TaskService/showCompletedTasks';
-import { showAllUser } from './module/userManagement/showAllUser';
+import { resetCompletedTasks } from './module/TaskService/resetCompletedTasks';
+import { joinNewUserToChat } from './module/joinAndLeaveChat/joinNewUserToChat';
+import { leaveUserToChat } from './module/joinAndLeaveChat/leaveUserToChat';
+import { ErrorObserve } from './module/ErrorObserver/ErrorObserver';
+import { handlerSelectChat } from './module/chatList/handlerSelectChat';
+import { handleCommand } from './command/handleCommand';
+import { handlerUpatePreset } from './module/userManagement/editPreset';
+import { handlerEditStatusSendMrUser } from './module/userManagement/editStatusSendMr';
 
 function initialState(): SessionData {
   return {
@@ -69,11 +61,13 @@ export class BotInstance {
     this.createListGitLabTokens().then((tokens) => {
       this.gitLabTokens = tokens;
     });
+    // шедулер в 00:00 очищает список выполненных задач У ВСЕХ!!!
+    resetCompletedTasks();
   }
 
   // TODO переписть записывание токенов
   async createListGitLabTokens() {
-    const listChat = await getAllChats();
+    const listChat = await ChatСonfig.all();
     const res: Record<string, string | null> = {};
 
     listChat?.forEach((chat) => {
@@ -84,10 +78,13 @@ export class BotInstance {
   }
 
   joinAndLeaveChat() {
-    this.bot.on('my_chat_member', joinAndLeaveBot);
+    this.bot.on('message:new_chat_members:is_bot', joinBot);
 
-    // TODO допилить чтоб проверял есть ли в базе, и если есть добял только id чата в колонку
-    // this.bot.on('message:new_chat_members', joinNewUser);
+    this.bot.on('message:new_chat_members', joinNewUserToChat);
+
+    this.bot.on('message:left_chat_member', leaveUserToChat);
+
+    this.bot.on('my_chat_member', leaveBot);
   }
 
   initHears() {
@@ -95,13 +92,15 @@ export class BotInstance {
     // слушутели на MR
     //============================================================
 
-    // git.russpass.dev gitlab.com — дергаем всех кто isActive
+    // git.russpass.dev gitlab.com дергаем всех кто isActive
     this.bot.hears(/!!https?:\/\/gitlab\.[^\s]+/i, (ctx) =>
       hearsActiveMR(ctx, this.gitLabTokens),
     );
 
     // дергаем по пресету
-    // this.bot.hears(new RegExp(`!https://git`), hearsPresetMR);
+    this.bot.hears(new RegExp(`!https://git`), (ctx) =>
+      hearsPresetMR(ctx, this.gitLabTokens),
+    );
 
     this.bot.hears('del-msg-bot', hearsDelMsgBot);
   }
@@ -123,56 +122,7 @@ export class BotInstance {
     );
     // ======
     // Кнопки списков чатов
-    this.bot.callbackQuery(
-      /^selectChat:-?\d+/,
-      (ctx: TCallbackQueryContext) => {
-        ctx.answerCallbackQuery().catch(() => {});
-        const chatInternalId = Number(ctx.callbackQuery.data.split(':')[1]);
-
-        const chatId = Number(ctx.callbackQuery.data.split(':')[2]);
-
-        const chatTitle = String(ctx.callbackQuery.data.split(':')[3]);
-
-        const action = String(ctx.callbackQuery.data.split(':')[4]);
-
-        // TODO сделать уникалтные ключи и потом удалять
-        ctx.session.chatInternalId = chatInternalId;
-        ctx.session.chatId = chatId;
-        ctx.session.chatTitle = chatTitle;
-
-        switch (action) {
-          case 'editStatusSendMR':
-            createListUsers(ctx, 'editStatusSendMR', chatInternalId);
-            break;
-          case 'delete':
-            createListUsers(ctx, 'delete', chatInternalId);
-            break;
-          case 'deleteFromChat':
-            createListUsers(ctx, 'deleteFromChat', chatInternalId);
-            break;
-          case 'setUser':
-            handleCommand(ctx, KeyCommand.setUser);
-            break;
-          case 'addUserToChat':
-            createListUsers(ctx, 'addUserToChat', chatInternalId);
-            break;
-          case 'completedTasks':
-            showCompletedTasks(ctx, chatInternalId);
-            break;
-          case 'allUser':
-            showAllUser(ctx, chatInternalId);
-            break;
-          case 'editChatConfig':
-            actionEditConfig(
-              ctx,
-              `Вы выбрали чат: ${chatTitle}. Что вы хотите отредактировать?`,
-              chatId,
-            );
-          default:
-            break;
-        }
-      },
-    );
+    this.bot.callbackQuery(/^selectChat:-?\d+/, handlerSelectChat);
 
     // ====== editStatusSendMR ======
 
@@ -207,57 +157,31 @@ export class BotInstance {
       }),
     );
 
-    this.bot.callbackQuery(
-      KeyCommand.deleteFromChat,
-      (ctx: TCallbackQueryContext) =>
-        commandShowListChat({
-          ctx,
-          text: 'Выберите чат проекта откуда надо удлаить польвателя ?',
-          action: 'deleteFromChat',
-        }),
-    );
-
-    this.bot.callbackQuery(/^deleteFromChat:\d/, (ctx: TCallbackQueryContext) =>
-      handlerDeleteUser({
-        ctx,
-        text: 'Вы уверены, что хотите удалить этого пользователя из чата ? ',
-        action: 'deleteFromChat',
-      }),
-    );
-
     // ======
 
+    this.bot.callbackQuery(/^add_config_chat:-?\d+/, handlerAddConfigChat);
+
+    this.bot.callbackQuery(/^updatePreset:\d/, handlerUpatePreset);
+
     this.bot.callbackQuery(
-      KeyCommand.addUserToChat,
+      KeyCommand.updatePreset,
       (ctx: TCallbackQueryContext) =>
         commandShowListChat({
           ctx,
-          text: 'Выберите чат проекта, в который хотите добавить пользователя.',
-          action: 'addUserToChat',
+          text: 'Выберите чат проекта, в котором хотите обновить пресет.',
+          action: 'updatePreset',
         }),
     );
 
-    this.bot.callbackQuery(/^addUserToChat:\d/, handlerAddUserToChat);
-
-    this.bot.callbackQuery(/^add_config_chat:-?\d+/, async (ctx) => {
-      const chatId = Number(ctx.callbackQuery.data.split(':')[1]);
-
-      const filedBD = String(
-        ctx.callbackQuery.data.split(':')[2],
-      ) as keyof ChatСonfig;
-
-      (await ctx.reply(
-        `Введите ${LIST_FIELD_CHAT_CONFIG[filedBD]} для этого чата.`,
-      ),
-        (ctx.session.keyCommand = KeyCommand.addConfigChat));
-
-      ctx.session.chatId = Number(chatId);
-      ctx.session.filedUpdateBD = filedBD;
-    });
-
-    this.bot.callbackQuery(KeyCommand.updatePreset, commandUpdatePreset);
-
-    this.bot.callbackQuery(KeyCommand.deletePreset, commandDeletePreset);
+    this.bot.callbackQuery(
+      KeyCommand.deletePreset,
+      (ctx: TCallbackQueryContext) =>
+        commandShowListChat({
+          ctx,
+          text: 'Выберите чат проекта, в который хотите посмотреть пользователя',
+          action: 'allUser',
+        }),
+    );
 
     this.bot.callbackQuery(KeyCommand.allUser, (ctx: TCallbackQueryContext) =>
       commandShowListChat({
@@ -278,14 +202,6 @@ export class BotInstance {
           await deleteUser(id);
           await createListUsers(ctx, 'delete', chatInternalId);
           break;
-        case KeyCommand.deleteFromChat:
-          await deleteChatMebers(id, chatInternalId);
-          await createListUsers(ctx, 'deleteFromChat', chatInternalId);
-          break;
-        case KeyCommand.deletePreset:
-          await deletePreset(ctx);
-          await commandUpdatePreset(ctx);
-          break;
         default:
           console.error(
             `Комманда была не назначина в callbackQuery ${KeyCommand.yesAnswer}`,
@@ -303,13 +219,6 @@ export class BotInstance {
         case KeyCommand.delete:
           createListUsers(ctx, 'delete', chatInternalId);
           break;
-        case KeyCommand.deleteFromChat:
-          createListUsers(ctx, 'deleteFromChat', chatInternalId);
-          break;
-        case KeyCommand.deletePreset:
-          commandUpdatePreset(ctx);
-          break;
-
         default:
           console.error(
             `Комманда была не назначина в callbackQuery ${KeyCommand.noAnswer}`,
@@ -320,8 +229,6 @@ export class BotInstance {
       ctx.session.keyCommand = null;
       ctx.answerCallbackQuery();
     });
-
-    this.bot.callbackQuery(/^preset:@*/, commandButtonPreset);
 
     // это создание юзера когда его добавляют в чат
     this.bot.callbackQuery(/^setUser:@*/, handleSetUserToChat);
@@ -438,29 +345,6 @@ export class BotInstance {
     // Обработка ошибок
     //============================================================
 
-    this.bot.catch(async (err) => {
-      const ctx = err.ctx;
-      console.error(`Error while handling update ${ctx.update.update_id}:`);
-      const e = err.error;
-
-      if (ctx && ctx.reply) {
-        try {
-          await ctx.reply('Извините, произошла ошибка. Попробуйте позже.');
-        } catch (replyError) {
-          console.error(
-            'Не удалось отправить сообщение об ошибке:',
-            replyError,
-          );
-        }
-      }
-
-      if (e instanceof GrammyError) {
-        console.error('Ошибка в запросе:', e.description);
-      } else if (e instanceof HttpError) {
-        console.error('Не удалось связаться с Telegram:', e);
-      } else {
-        console.error('Неизвестная ошибка:', e);
-      }
-    });
+    this.bot.catch(ErrorObserve);
   }
 }

@@ -1,15 +1,10 @@
 import { MyContext } from '../../type';
 import { actionAddConfig } from '../chatConfig/add';
 import { ChatСonfig } from '../../db';
-import { ChatMemberOwner } from 'grammy/types';
 
-export const addBotToChat = async (
-  ctx: MyContext,
-  statusMember: string,
-  chatTitle: string,
-) => {
+export const addBotToChat = async (ctx: MyContext, chatTitle: string) => {
   const chatId = String(ctx.chat?.id);
-  const whoAdded = ctx.myChatMember?.from;
+  const whoAdded = ctx.message?.from;
 
   if (!whoAdded) return;
   if (ctx.chat?.type === 'private') return;

@@ -1,19 +1,23 @@
-import { Users } from '../../db';
+import { ChatMembers } from '../../db/chatMembers';
 import { TCallbackQueryContext } from '../../type';
 import { createListUsers } from './helper';
 
 export const handlerEditStatusSendMrUser = async (
   ctx: TCallbackQueryContext,
 ) => {
+  ctx.answerCallbackQuery();
   const userId = Number(ctx.callbackQuery.data.split(':')[1]);
   const chatInternalId = Number(ctx.callbackQuery.data.split(':')[2]);
 
-  const user = await Users.findChatMember(userId, chatInternalId);
+  const user = await ChatMembers.findChatMember(userId, chatInternalId, [
+    'isActive',
+  ]);
 
   const statusIsActive = !user?.isActive ? 1 : 0;
 
-  Users.updateChatMember(userId, chatInternalId, { isActive: statusIsActive });
+  ChatMembers.updateField(userId, chatInternalId, {
+    isActive: statusIsActive,
+  });
 
   createListUsers(ctx, 'editStatusSendMR', chatInternalId);
-  ctx.answerCallbackQuery();
 };

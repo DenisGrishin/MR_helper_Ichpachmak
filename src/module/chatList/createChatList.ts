@@ -1,8 +1,8 @@
 import { InlineKeyboard } from 'grammy';
-import { getAllChats } from '../../db/helpers';
 import { CommandAction, modKeybord } from '../../keyboards/type';
 import { MyContext, TCallbackQueryContext } from '../../type';
 import { chunkInlineKeyboardChats } from '../../keyboards/keyboard';
+import { ChatСonfig } from '../../db';
 
 export const commandShowListChat = async ({
   ctx,
@@ -19,7 +19,7 @@ export const commandShowListChat = async ({
   // const user = await Users.findByUser(`@${ctx.from?.username}`);
   // const listChat = await Users.findUserChats(user.id);
 
-  const listChat = await getAllChats();
+  const listChat = await ChatСonfig.all();
 
   if (!listChat.length) {
     await ctx.reply(

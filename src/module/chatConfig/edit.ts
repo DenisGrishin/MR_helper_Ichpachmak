@@ -18,7 +18,7 @@ export const actionEditConfig = async (
       `${KeyCommand.addConfigChat}:${chatId}:tokenGitLab`,
     )
     .row()
-    .text('<= Назад', `${KeyCommand.backToMenu}`);
+    .text('< Назад', `${KeyCommand.backToMenu}`);
 
   if (ctx.from?.id) {
     await ctx.callbackQuery?.message?.editText(text, {

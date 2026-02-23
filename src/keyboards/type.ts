@@ -4,10 +4,9 @@ export type CommandAction =
   | 'delete'
   | 'chatDelete'
   | 'editChatConfig'
-  | 'deleteFromChat'
-  | 'addUserToChat'
   | 'completedTasks'
-  | 'allUser';
+  | 'allUser'
+  | 'updatePreset';
 
 export type nameCallbackQuery = 'selectChat' | 'newUser';
 

@@ -1,4 +1,5 @@
 import { Users } from '../../db';
+import { ChatMembers } from '../../db/chatMembers';
 import { MyContext } from '../../type';
 
 export const showCompletedTasks = async (
@@ -7,11 +8,32 @@ export const showCompletedTasks = async (
 ) => {
   const author = `@${ctx?.from?.username}`;
 
-  const currentUser: any = await Users.findByUser(author);
+  const currentUser: any = await Users.findUser(
+    author,
+    'name',
+    (err, users) => {
+      if (err) {
+        console.error(err);
+      } else if (users && users.length > 0) {
+        console.log('Пользователь найден:', users[0]);
+      } else {
+        console.log('Пользователь с таким id не найден');
+      }
+    },
+  );
 
-  const users = await Users.findChatMember(currentUser.id, chatInternalId);
+  const user = await ChatMembers.findChatMember(
+    currentUser.id,
+    chatInternalId,
+    ['completedTasks'],
+  );
 
-  const parseCompletedTasks = Array.from(JSON.parse(users.completedTasks));
+  if (!user) {
+    ctx.reply(`${author} такого пользователя еще нет.`);
+    return;
+  }
+
+  const parseCompletedTasks = Array.from(JSON.parse(user.completedTasks ?? ''));
 
   const listCompletedTasks = parseCompletedTasks.join('\n');
 
