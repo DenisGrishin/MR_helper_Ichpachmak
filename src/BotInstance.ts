@@ -23,7 +23,7 @@ import { ErrorObserve } from './module/ErrorObserver/ErrorObserver';
 import { handlerSelectChat } from './module/chatList/handlerSelectChat';
 import { handleCommand } from './command/handleCommand';
 import { handlerUpatePreset } from './module/userManagement/editPreset';
-import { handlerEditStatusSendMrUser } from './module/userManagement/editStatusSendMr';
+import { handlerEditStatusSendMrUser } from './module/userManagement/EditStatusSendMr';
 
 function initialState(): SessionData {
   return {
@@ -93,13 +93,15 @@ export class BotInstance {
     //============================================================
 
     // git.russpass.dev gitlab.com дергаем всех кто isActive
-    this.bot.hears(/!!https?:\/\/gitlab\.[^\s]+/i, (ctx) =>
-      hearsActiveMR(ctx, this.gitLabTokens),
+    this.bot.hears(
+      /^!!https?:\/\/(?:[\w-]+\.)*(?:gitlab|git)\.[\w.-]+\/[^\s]+\/-\/merge_requests\/\d+/i,
+      (ctx) => hearsActiveMR(ctx, this.gitLabTokens),
     );
 
     // дергаем по пресету
-    this.bot.hears(new RegExp(`!https://git`), (ctx) =>
-      hearsPresetMR(ctx, this.gitLabTokens),
+    this.bot.hears(
+      /^!https?:\/\/(?:[\w-]+\.)*(?:gitlab|git)\.[\w.-]+\/[^\s]+\/-\/merge_requests\/\d+/i,
+      (ctx) => hearsPresetMR(ctx, this.gitLabTokens),
     );
 
     this.bot.hears('del-msg-bot', hearsDelMsgBot);
