@@ -5,7 +5,12 @@ import { createListUsers } from './helper';
 export const handlerEditStatusSendMrUser = async (
   ctx: TCallbackQueryContext,
 ) => {
-  ctx.answerCallbackQuery();
+  try {
+    await ctx.answerCallbackQuery();
+  } catch (err) {
+    console.error('Не удалось ответить на callback query:', err);
+  }
+
   const userId = Number(ctx.callbackQuery.data.split(':')[1]);
   const chatInternalId = Number(ctx.callbackQuery.data.split(':')[2]);
 
@@ -19,5 +24,9 @@ export const handlerEditStatusSendMrUser = async (
     isActive: statusIsActive,
   });
 
-  createListUsers(ctx, 'editStatusSendMR', chatInternalId);
+  try {
+    await createListUsers(ctx, 'editStatusSendMR', chatInternalId);
+  } catch (err) {
+    console.error('Не удалось обновить список пользователей:', err);
+  }
 };

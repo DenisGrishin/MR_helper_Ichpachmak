@@ -84,24 +84,21 @@ export const chunkInlineKeyboardUser = ({
   const preset = JSON.parse(authorData?.preset || '[]');
 
   for (let i = 0; i < list.length; i += 3) {
-    const sliceUser = list
-      .slice(i, i + 3)
-      .filter((el: any) => el.name !== authorData?.name)
-      .map((user: any) => {
-        const queryParams = `${action}:${user.id}:${chatInternalId}`;
+    const sliceUser = list.slice(i, i + 3).map((user: any) => {
+      const queryParams = `${action}:${user.id}:${chatInternalId}`;
 
-        if (action === 'updatePreset') {
-          return InlineKeyboard.text(
-            `${preset.includes(user.name) ? '✅' : '❌'} ${user.name}`,
-            `${queryParams}:${user.name}:${authorData?.id}`,
-          );
-        }
-
+      if (action === 'updatePreset') {
         return InlineKeyboard.text(
-          `${user.isActive ? '✅' : '❌'} ${user.name}`,
-          queryParams,
+          `${preset.includes(user.name) ? '✅' : '❌'} ${user.name}`,
+          `${queryParams}:${user.name}:${authorData?.id}`,
         );
-      });
+      }
+
+      return InlineKeyboard.text(
+        `${user.isActive ? '✅' : '❌'} ${user.name}`,
+        queryParams,
+      );
+    });
 
     keyboardButtonRows.push(sliceUser);
   }

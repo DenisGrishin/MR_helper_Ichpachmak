@@ -19,8 +19,20 @@ export const hearsActiveMR = async (
   }
 
   if (!gitLabTokens[chatId]) {
-    ctx.reply('Добавьте токен для GitLab');
-    throw new Error('Нет токена для GitLab');
+    try {
+      await ctx.reply(
+        '⚠️ Токен GitLab не настроен для этого чата.\n\n' +
+          'Чтобы добавить токен:\n' +
+          '1. Откройте личные сообщения с ботом\n' +
+          '2. Используйте команду /menu\n' +
+          '3. Выберите "Настройки чата проекта"\n' +
+          '4. Нажмите "Изменить токен GitLab"\n' +
+          '5. Введите ваш Personal Access Token от GitLab',
+      );
+    } catch (err) {
+      console.error(`Не удалось отправить сообщение в чат ${chatId}:`, err);
+    }
+    return;
   }
 
   const chatInternalId = await ChatСonfig.findByTelegramId(chatId);
@@ -54,7 +66,11 @@ export const hearsActiveMR = async (
     valueSliceLinkMR: 2,
   });
 
-  await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
+  try {
+    await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
+  } catch (err) {
+    console.error(`Не удалось удалить сообщение в чате ${chatId}:`, err);
+  }
 
   if (taskNumber !== 'UNKNOWN') {
     recordCompletedTask({

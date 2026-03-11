@@ -57,15 +57,19 @@ export const createListUsers = async (
 
   if (!authorData) {
     console.log(`Вас ${ctx.from.username} нет в этом чате`);
-    await ctx.callbackQuery.message?.editText(
-      `Вас @${ctx.from.username} нет в этом чате`,
-      {
-        reply_markup: new InlineKeyboard().text(
-          '< Назад',
-          KeyCommand.backToMenu,
-        ),
-      },
-    );
+    try {
+      await ctx.callbackQuery.message?.editText(
+        `Вас @${ctx.from.username} нет в этом чате`,
+        {
+          reply_markup: new InlineKeyboard().text(
+            '< Назад',
+            KeyCommand.backToMenu,
+          ),
+        },
+      );
+    } catch (err) {
+      console.error('Не удалось отредактировать сообщение:', err);
+    }
     return;
   }
 
@@ -105,9 +109,20 @@ export const createListUsers = async (
       break;
   }
 
-  await ctx.callbackQuery.message?.editText(messageText, {
-    reply_markup: keyboardUser,
-  });
+  try {
+    await ctx.callbackQuery.message?.editText(messageText, {
+      reply_markup: keyboardUser,
+    });
+  } catch (err) {
+    console.error(
+      'Не удалось отредактировать сообщение со списком пользователей:',
+      err,
+    );
+  }
 
-  ctx.answerCallbackQuery();
+  try {
+    await ctx.answerCallbackQuery();
+  } catch (err) {
+    console.error('Не удалось ответить на callback query:', err);
+  }
 };

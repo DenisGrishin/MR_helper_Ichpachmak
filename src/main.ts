@@ -6,7 +6,8 @@ import { BotInstance } from './BotInstance';
 
 const bot = new Bot<MyContext>(`${process.env.BOT_API_KEY}`);
 
-new BotInstance({
+// Используем статический метод create для гарантии загрузки токенов до инициализации
+BotInstance.create({
   bot,
 });
 

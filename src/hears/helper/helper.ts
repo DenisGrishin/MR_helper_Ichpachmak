@@ -71,7 +71,7 @@ export const messageGenerator = ({
     ? `<b>Assignee:</b> ${MR.assignees[0].name}\n`
     : '';
 
-  const header = `МР от ${MR.author.name}\n<b>Отпраил:</b> @${ctx.message!.from!.username}\n${assigneeText}<b>Проект:</b> ${MR.title}\n`;
+  const header = `МР от ${MR.author.name}\n<b>Отправил:</b> @${ctx.message!.from!.username}\n${assigneeText}<b>Проект:</b> ${MR.title}\n`;
 
   const message = `${header}${linkMR}${
     taskNumber !== 'UNKNOWN' ? `${taskLink}` : ''

@@ -23,7 +23,7 @@ import { ErrorObserve } from './module/ErrorObserver/ErrorObserver';
 import { handlerSelectChat } from './module/chatList/handlerSelectChat';
 import { handleCommand } from './command/handleCommand';
 import { handlerUpatePreset } from './module/userManagement/editPreset';
-import { handlerEditStatusSendMrUser } from './module/userManagement/EditStatusSendMr';
+import { handlerEditStatusSendMrUser } from './module/userManagement/editStatusSendMr';
 
 function initialState(): SessionData {
   return {
@@ -41,7 +41,7 @@ export class BotInstance {
   bot: Bot<MyContext>;
   gitLabTokens: Record<string, string | null>;
 
-  constructor({ bot }: { bot: Bot<MyContext> }) {
+  private constructor({ bot }: { bot: Bot<MyContext> }) {
     this.bot = bot;
     this.gitLabTokens = {};
 
@@ -50,19 +50,23 @@ export class BotInstance {
     this.bot.use(hydrate());
 
     this.bot.api.setMyCommands(LIST_MY_COMMAND);
+  }
 
-    // тут надо соблюдать порядок вызовов
-    // TODO найти про это инфу
-    this.initHears();
-    this.initCommands();
-    this.initInteractiveMenu();
-    this.initErrorObserver();
-    this.joinAndLeaveChat();
-    this.createListGitLabTokens().then((tokens) => {
-      this.gitLabTokens = tokens;
-    });
+  static async create({ bot }: { bot: Bot<MyContext> }): Promise<BotInstance> {
+    const instance = new BotInstance({ bot });
+
+    instance.gitLabTokens = await instance.createListGitLabTokens();
+
+    instance.initHears();
+    instance.initCommands();
+    instance.initInteractiveMenu();
+    instance.initErrorObserver();
+    instance.joinAndLeaveChat();
+
     // шедулер в 00:00 очищает список выполненных задач У ВСЕХ!!!
     resetCompletedTasks();
+
+    return instance;
   }
 
   // TODO переписть записывание токенов

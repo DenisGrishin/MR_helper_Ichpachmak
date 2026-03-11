@@ -43,8 +43,10 @@ export const handlerSelectChat = (ctx: TCallbackQueryContext) => {
         `Вы выбрали чат: ${chatTitle}. Что вы хотите отредактировать?`,
         chatId,
       );
+      break;
     case 'updatePreset':
       createListUsers(ctx, 'updatePreset', chatInternalId);
+      break;
     default:
       break;
   }
