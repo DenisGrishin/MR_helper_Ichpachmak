@@ -4,7 +4,7 @@ import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 import { MyContext } from '../type';
 import { getTaskNumber, messageGenerator } from './helper';
 import { fetchMR } from './helper/helper';
-import { Logger } from '../utils/logger';
+import logger from '../../logger/logger';
 
 export const hearsPresetMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
@@ -12,7 +12,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
   const chatId = ctx.chat?.id;
 
   if (!chatId) {
-    Logger.error('chatId отсутствует', {
+    logger.error({
+      msg: 'chatId отсутствует',
       userId: ctx.from?.id,
       username: ctx.from?.username,
       function: 'hearsPresetMR',
@@ -29,14 +30,16 @@ export const hearsPresetMR = async (ctx: MyContext) => {
     'name',
     (err, users) => {
       if (err) {
-        Logger.error('Ошибка при поиске пользователя', {
+        logger.error({
+          msg: 'Ошибка при поиске пользователя',
           error: err instanceof Error ? err.message : err,
           authorMR,
           chatId,
           function: 'hearsPresetMR',
         });
       } else if (users && users.length > 0) {
-        Logger.info('Пользователь найден', {
+        logger.info({
+          msg: 'Пользователь найден',
           userId: users[0].id,
           username: users[0].name,
           authorMR,
@@ -44,7 +47,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
           function: 'hearsPresetMR',
         });
       } else {
-        Logger.warn('Пользователь с таким id не найден', {
+        logger.warn({
+          msg: 'Пользователь с таким id не найден',
           authorMR,
           chatId,
           function: 'hearsPresetMR',
@@ -62,7 +66,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
   const preset = JSON.parse(currentChatMember?.preset || '[]');
 
   if (!preset.length) {
-    Logger.warn('Пресет пользователя пуст', {
+    logger.warn({
+      msg: 'Пресет пользователя пуст',
       userId: currentUser.id,
       username: currentUser.name,
       chatId,
@@ -72,7 +77,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
     try {
       await ctx.reply('Создайте пресет');
     } catch (err) {
-      Logger.error('Не удалось отправить сообщение о пустом пресете', {
+      logger.error({
+        msg: 'Не удалось отправить сообщение о пустом пресете',
         chatId,
         error: err instanceof Error ? err.message : err,
         function: 'hearsPresetMR',
@@ -87,7 +93,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
     .join(' ');
 
   if (!chatInternalId.tokenGitLab) {
-    Logger.warn('Токен GitLab не настроен для чата', {
+    logger.warn({
+      msg: 'Токен GitLab не настроен для чата',
       chatId,
       chatInternalId: chatInternalId.id,
       userId: ctx.from?.id,
@@ -105,7 +112,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
           '5. Введите ваш Personal Access Token от GitLab',
       );
     } catch (err) {
-      Logger.error('Не удалось отправить сообщение об отсутствии токена', {
+      logger.error({
+        msg: 'Не удалось отправить сообщение об отсутствии токена',
         chatId,
         error: err instanceof Error ? err.message : err,
         function: 'hearsPresetMR',
@@ -117,7 +125,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
   const MR = await fetchMR(ctx, chatInternalId.tokenGitLab);
 
   if (!MR) {
-    Logger.warn('MR не получен', {
+    logger.warn({
+      msg: 'MR не получен',
       chatId,
       chatInternalId: chatInternalId.id,
       userId: currentUser.id,
@@ -138,14 +147,16 @@ export const hearsPresetMR = async (ctx: MyContext) => {
 
   try {
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
-    Logger.info('Сообщение пользователя удалено', {
+    logger.info({
+      msg: 'Сообщение пользователя удалено',
       chatId,
       messageId: ctx.message!.message_id,
       userId: ctx.from?.id,
       function: 'hearsPresetMR',
     });
   } catch (err) {
-    Logger.error('Не удалось удалить сообщение пользователя', {
+    logger.error({
+      msg: 'Не удалось удалить сообщение пользователя',
       chatId,
       messageId: ctx.message!.message_id,
       error: err instanceof Error ? err.message : err,
@@ -154,7 +165,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
   }
 
   if (taskNumber !== 'UNKNOWN') {
-    Logger.info('Запись выполненной задачи', {
+    logger.info({
+      msg: 'Запись выполненной задачи',
       taskNumber,
       chatId,
       chatInternalId: chatInternalId.id,
@@ -174,7 +186,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
     await ctx.reply(message, {
       disable_web_page_preview: true,
     } as any);
-    Logger.success('Сообщение MR успешно отправлено', {
+    logger.info({
+      msg: 'Сообщение MR успешно отправлено',
       chatId,
       taskNumber,
       authorMR,
@@ -182,7 +195,8 @@ export const hearsPresetMR = async (ctx: MyContext) => {
       function: 'hearsPresetMR',
     });
   } catch (err) {
-    Logger.error('Не удалось отправить сообщение MR', {
+    logger.error({
+      msg: 'Не удалось отправить сообщение MR',
       chatId,
       taskNumber,
       error: err instanceof Error ? err.message : err,

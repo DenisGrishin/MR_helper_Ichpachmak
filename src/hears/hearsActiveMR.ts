@@ -4,16 +4,17 @@ import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 
 import { MyContext } from '../type';
 import { fetchMR, getTaskNumber, messageGenerator } from './helper';
-import { Logger } from '../utils/logger';
+import logger from '../../logger/logger';
 
-// TODO вынести отдельно чтоб при старте сохрнять ативных пользватлей
+// TODO вынести отдельно чтоб при старте сохнять ативных пользватлей
 export const hearsActiveMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
 
   const chatId = ctx.chat?.id;
 
   if (!chatId) {
-    Logger.error('chatId отсутствует в сессии', {
+    logger.error({
+      msg: 'chatId отсутствует в сессии',
       userId: ctx.from?.id,
       username: ctx.from?.username,
       function: 'hearsActiveMR',
@@ -39,7 +40,8 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     .join(' ');
 
   if (!chatInternalId.tokenGitLab) {
-    Logger.warn('Токен GitLab не настроен для чата', {
+    logger.warn({
+      msg: 'Токен GitLab не настроен для чата',
       chatId,
       chatInternalId: chatInternalId.id,
       userId: ctx.from?.id,
@@ -57,7 +59,8 @@ export const hearsActiveMR = async (ctx: MyContext) => {
           '5. Введите ваш Personal Access Token от GitLab',
       );
     } catch (err) {
-      Logger.error('Не удалось отправить сообщение об отсутствии токена', {
+      logger.error({
+        msg: 'Не удалось отправить сообщение об отсутствии токена',
         chatId,
         error: err instanceof Error ? err.message : err,
         function: 'hearsActiveMR',
@@ -69,7 +72,8 @@ export const hearsActiveMR = async (ctx: MyContext) => {
   const MR = await fetchMR(ctx, chatInternalId.tokenGitLab);
 
   if (!MR) {
-    Logger.warn('MR не получен', {
+    logger.warn({
+      msg: 'MR не получен',
       chatId,
       chatInternalId: chatInternalId.id,
       function: 'hearsActiveMR',
@@ -89,13 +93,15 @@ export const hearsActiveMR = async (ctx: MyContext) => {
 
   try {
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
-    Logger.info('Сообщение пользователя удалено', {
+    logger.info({
+      msg: 'Сообщение пользователя удалено',
       chatId,
       messageId: ctx.message!.message_id,
       userId: ctx.from?.id,
     });
   } catch (err) {
-    Logger.error('Не удалось удалить сообщение пользователя', {
+    logger.error({
+      msg: 'Не удалось удалить сообщение пользователя',
       chatId,
       messageId: ctx.message!.message_id,
       error: err instanceof Error ? err.message : err,
@@ -104,7 +110,8 @@ export const hearsActiveMR = async (ctx: MyContext) => {
   }
 
   if (taskNumber !== 'UNKNOWN') {
-    Logger.info('Запись выполненной задачи', {
+    logger.info({
+      msg: 'Запись выполненной задачи',
       taskNumber,
       chatId,
       chatInternalId: chatInternalId.id,
@@ -123,7 +130,8 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     await ctx.reply(message, {
       disable_web_page_preview: true,
     } as any);
-    Logger.success('Сообщение MR успешно отправлено', {
+    logger.info({
+      msg: 'Сообщение MR успешно отправлено',
       chatId,
       taskNumber,
       authorMR,
@@ -131,7 +139,8 @@ export const hearsActiveMR = async (ctx: MyContext) => {
       function: 'hearsActiveMR',
     });
   } catch (err) {
-    Logger.error('Не удалось отправить сообщение MR', {
+    logger.error({
+      msg: 'Не удалось отправить сообщение MR',
       chatId,
       taskNumber,
       error: err instanceof Error ? err.message : err,

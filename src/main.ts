@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Bot } from 'grammy';
-
+import logger from '../logger/logger';
 import { MyContext } from './type';
 import { BotInstance } from './BotInstance';
 
@@ -16,11 +16,16 @@ async function startBot(bot: Bot<MyContext>): Promise<void> {
   try {
     bot.start({
       onStart: () => {
-        console.log('Bot started');
+        logger.info({
+          msg: 'Bot started',
+        });
       },
     });
   } catch (error) {
-    console.error('Error in startBot:', error);
+    logger.error({
+      msg: 'Error in startBot',
+      error: error instanceof Error ? error.message : error,
+    });
   }
 }
 

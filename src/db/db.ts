@@ -25,7 +25,7 @@ db.serialize(() => {
       chatId INTEGER UNIQUE,
       chatTitle TEXT,
       gitBaseUrl TEXT,
-      tokenGitLab TEXT UNIQUE
+      tokenGitLab TEXT 
     ) 
   `);
 

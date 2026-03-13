@@ -1,7 +1,7 @@
 import { ApiGitLab } from '../../api/apiGitLab';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from '../constant';
 import { MyContext } from '../../type';
-import { Logger } from '../../utils/logger';
+import logger from '../../../logger/logger';
 
 export const fetchMR = async (ctx: MyContext, gitLabToken: string) => {
   const text = ctx.message!.text!;
@@ -9,7 +9,8 @@ export const fetchMR = async (ctx: MyContext, gitLabToken: string) => {
   const idMR = text.match(REGEX_MR_ID)![1];
 
   if (!gitLabToken) {
-    Logger.error('Токен GitLab не найден', {
+    logger.error({
+      msg: 'Токен GitLab не найден',
       chatId: ctx.chat?.id,
       userId: ctx.from?.id,
       username: ctx.from?.username,
@@ -20,7 +21,8 @@ export const fetchMR = async (ctx: MyContext, gitLabToken: string) => {
   }
 
   try {
-    Logger.info(`Запрос MR от GitLab`, {
+    logger.info({
+      msg: `Запрос MR от GitLab`,
       mrId: idMR,
       projectPath,
       chatId: ctx.chat?.id,
@@ -29,7 +31,8 @@ export const fetchMR = async (ctx: MyContext, gitLabToken: string) => {
     const MR = await ApiGitLab.getMR(idMR, projectPath, gitLabToken);
     return MR;
   } catch (error) {
-    Logger.error('Ошибка при получении MR', {
+    logger.error({
+      msg: 'Ошибка при получении MR',
       error: error instanceof Error ? error.message : error,
       mrId: idMR,
       projectPath,
