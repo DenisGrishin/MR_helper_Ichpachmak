@@ -23,7 +23,7 @@ import { ErrorObserve } from './module/ErrorObserver/ErrorObserver';
 import { handlerSelectChat } from './module/chatList/handlerSelectChat';
 import { handleCommand } from './command/handleCommand';
 import { handlerUpatePreset } from './module/userManagement/editPreset';
-import { handlerEditStatusSendMrUser } from './module/userManagement/editStatusSendMr';
+import { handlerEditStatusSendMrUser } from './module/userManagement/EditStatusSendMr';
 
 function initialState(): SessionData {
   return {
@@ -39,46 +39,24 @@ function initialState(): SessionData {
 
 export class BotInstance {
   bot: Bot<MyContext>;
-  gitLabTokens: Record<string, string | null>;
 
-  private constructor({ bot }: { bot: Bot<MyContext> }) {
+  constructor(bot: Bot<MyContext>) {
     this.bot = bot;
-    this.gitLabTokens = {};
 
     this.bot.use(session({ initial: initialState }));
     //плагин для интерактивного меню
     this.bot.use(hydrate());
 
     this.bot.api.setMyCommands(LIST_MY_COMMAND);
-  }
 
-  static async create({ bot }: { bot: Bot<MyContext> }): Promise<BotInstance> {
-    const instance = new BotInstance({ bot });
-
-    instance.gitLabTokens = await instance.createListGitLabTokens();
-
-    instance.initHears();
-    instance.initCommands();
-    instance.initInteractiveMenu();
-    instance.initErrorObserver();
-    instance.joinAndLeaveChat();
+    this.initHears();
+    this.initCommands();
+    this.initInteractiveMenu();
+    this.initErrorObserver();
+    this.joinAndLeaveChat();
 
     // шедулер в 00:00 очищает список выполненных задач У ВСЕХ!!!
     resetCompletedTasks();
-
-    return instance;
-  }
-
-  // TODO переписть записывание токенов
-  async createListGitLabTokens() {
-    const listChat = await ChatСonfig.all();
-    const res: Record<string, string | null> = {};
-
-    listChat?.forEach((chat) => {
-      res[chat.chatId] = chat.tokenGitLab;
-    });
-
-    return res;
   }
 
   joinAndLeaveChat() {
@@ -99,13 +77,13 @@ export class BotInstance {
     // git.russpass.dev gitlab.com дергаем всех кто isActive
     this.bot.hears(
       /^!!https?:\/\/(?:[\w-]+\.)*(?:gitlab|git)\.[\w.-]+\/[^\s]+\/-\/merge_requests\/\d+/i,
-      (ctx) => hearsActiveMR(ctx, this.gitLabTokens),
+      hearsActiveMR,
     );
 
     // дергаем по пресету
     this.bot.hears(
       /^!https?:\/\/(?:[\w-]+\.)*(?:gitlab|git)\.[\w.-]+\/[^\s]+\/-\/merge_requests\/\d+/i,
-      (ctx) => hearsPresetMR(ctx, this.gitLabTokens),
+      hearsPresetMR,
     );
 
     this.bot.hears('del-msg-bot', hearsDelMsgBot);

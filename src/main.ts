@@ -6,19 +6,19 @@ import { BotInstance } from './BotInstance';
 
 const bot = new Bot<MyContext>(`${process.env.BOT_API_KEY}`);
 
-// Используем статический метод create для гарантии загрузки токенов до инициализации
-BotInstance.create({
-  bot,
-});
-
 //============================================================
 // Функция запуска бота
 //============================================================
 
+new BotInstance(bot);
+
 async function startBot(bot: Bot<MyContext>): Promise<void> {
   try {
-    await bot.start();
-    console.log('Bot started');
+    bot.start({
+      onStart: () => {
+        console.log('Bot started');
+      },
+    });
   } catch (error) {
     console.error('Error in startBot:', error);
   }

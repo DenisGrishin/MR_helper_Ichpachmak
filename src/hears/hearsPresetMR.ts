@@ -4,34 +4,20 @@ import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 import { MyContext } from '../type';
 import { getTaskNumber, messageGenerator } from './helper';
 import { fetchMR } from './helper/helper';
+import { Logger } from '../utils/logger';
 
-export const hearsPresetMR = async (
-  ctx: MyContext,
-  gitLabTokens: Record<string, string | null>,
-) => {
+export const hearsPresetMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи
 
   const chatId = ctx.chat?.id;
 
   if (!chatId) {
+    Logger.error('chatId отсутствует', {
+      userId: ctx.from?.id,
+      username: ctx.from?.username,
+      function: 'hearsPresetMR',
+    });
     throw new Error('chatId отсутствует');
-  }
-
-  if (!gitLabTokens[chatId]) {
-    try {
-      await ctx.reply(
-        '⚠️ Токен GitLab не настроен для этого чата.\n\n' +
-          'Чтобы добавить токен:\n' +
-          '1. Откройте личные сообщения с ботом\n' +
-          '2. Используйте команду /menu\n' +
-          '3. Выберите "Настройки чата проекта"\n' +
-          '4. Нажмите "Изменить токен GitLab"\n' +
-          '5. Введите ваш Personal Access Token от GitLab',
-      );
-    } catch (err) {
-      console.error(`Не удалось отправить сообщение в чат ${chatId}:`, err);
-    }
-    return;
   }
 
   const chatInternalId = await ChatСonfig.findByTelegramId(chatId);
@@ -43,11 +29,26 @@ export const hearsPresetMR = async (
     'name',
     (err, users) => {
       if (err) {
-        console.error(err);
+        Logger.error('Ошибка при поиске пользователя', {
+          error: err instanceof Error ? err.message : err,
+          authorMR,
+          chatId,
+          function: 'hearsPresetMR',
+        });
       } else if (users && users.length > 0) {
-        console.log('Пользователь найден:', users[0]);
+        Logger.info('Пользователь найден', {
+          userId: users[0].id,
+          username: users[0].name,
+          authorMR,
+          chatId,
+          function: 'hearsPresetMR',
+        });
       } else {
-        console.log('Пользователь с таким id не найден');
+        Logger.warn('Пользователь с таким id не найден', {
+          authorMR,
+          chatId,
+          function: 'hearsPresetMR',
+        });
       }
     },
   );
@@ -61,10 +62,21 @@ export const hearsPresetMR = async (
   const preset = JSON.parse(currentChatMember?.preset || '[]');
 
   if (!preset.length) {
+    Logger.warn('Пресет пользователя пуст', {
+      userId: currentUser.id,
+      username: currentUser.name,
+      chatId,
+      chatInternalId: chatInternalId.id,
+      function: 'hearsPresetMR',
+    });
     try {
       await ctx.reply('Создайте пресет');
     } catch (err) {
-      console.error(`Не удалось отправить сообщение в чат ${chatId}:`, err);
+      Logger.error('Не удалось отправить сообщение о пустом пресете', {
+        chatId,
+        error: err instanceof Error ? err.message : err,
+        function: 'hearsPresetMR',
+      });
     }
     return;
   }
@@ -74,9 +86,45 @@ export const hearsPresetMR = async (
     .filter((el: string) => el !== undefined && el !== authorMR)
     .join(' ');
 
-  const MR = await fetchMR(ctx, gitLabTokens);
+  if (!chatInternalId.tokenGitLab) {
+    Logger.warn('Токен GitLab не настроен для чата', {
+      chatId,
+      chatInternalId: chatInternalId.id,
+      userId: ctx.from?.id,
+      username: ctx.from?.username,
+      function: 'hearsPresetMR',
+    });
+    try {
+      await ctx.reply(
+        '⚠️ Токен GitLab не настроен для этого чата.\n\n' +
+          'Чтобы добавить токен:\n' +
+          '1. Откройте личные сообщения с ботом\n' +
+          '2. Используйте команду /menu\n' +
+          '3. Выберите "Настройки чата проекта"\n' +
+          '4. Нажмите "Изменить токен GitLab"\n' +
+          '5. Введите ваш Personal Access Token от GitLab',
+      );
+    } catch (err) {
+      Logger.error('Не удалось отправить сообщение об отсутствии токена', {
+        chatId,
+        error: err instanceof Error ? err.message : err,
+        function: 'hearsPresetMR',
+      });
+    }
+    return;
+  }
 
-  if (!MR) return;
+  const MR = await fetchMR(ctx, chatInternalId.tokenGitLab);
+
+  if (!MR) {
+    Logger.warn('MR не получен', {
+      chatId,
+      chatInternalId: chatInternalId.id,
+      userId: currentUser.id,
+      function: 'hearsPresetMR',
+    });
+    return;
+  }
 
   const taskNumber = getTaskNumber(MR.source_branch);
 
@@ -90,11 +138,29 @@ export const hearsPresetMR = async (
 
   try {
     await ctx.api.deleteMessage(ctx.chat!.id, ctx.message!.message_id);
+    Logger.info('Сообщение пользователя удалено', {
+      chatId,
+      messageId: ctx.message!.message_id,
+      userId: ctx.from?.id,
+      function: 'hearsPresetMR',
+    });
   } catch (err) {
-    console.error(`Не удалось удалить сообщение в чате ${chatId}:`, err);
+    Logger.error('Не удалось удалить сообщение пользователя', {
+      chatId,
+      messageId: ctx.message!.message_id,
+      error: err instanceof Error ? err.message : err,
+      function: 'hearsPresetMR',
+    });
   }
 
   if (taskNumber !== 'UNKNOWN') {
+    Logger.info('Запись выполненной задачи', {
+      taskNumber,
+      chatId,
+      chatInternalId: chatInternalId.id,
+      userId: currentUser.id,
+      function: 'hearsPresetMR',
+    });
     recordCompletedTask({
       taskNumber,
       completedTasks: JSON.parse(currentChatMember?.completedTasks ?? '[]'),
@@ -107,9 +173,20 @@ export const hearsPresetMR = async (
     // @ts-ignore
     await ctx.reply(message, {
       disable_web_page_preview: true,
-      parse_mode: 'HTML',
     } as any);
+    Logger.success('Сообщение MR успешно отправлено', {
+      chatId,
+      taskNumber,
+      authorMR,
+      presetUsersCount: preset.length,
+      function: 'hearsPresetMR',
+    });
   } catch (err) {
-    console.error('❌ Не удалось удалить сообщение:', err);
+    Logger.error('Не удалось отправить сообщение MR', {
+      chatId,
+      taskNumber,
+      error: err instanceof Error ? err.message : err,
+      function: 'hearsPresetMR',
+    });
   }
 };
