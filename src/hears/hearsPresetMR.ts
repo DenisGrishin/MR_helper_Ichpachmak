@@ -4,7 +4,7 @@ import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 import { MyContext } from '../type';
 import { getTaskNumber, messageGenerator } from './helper';
 import { fetchMR } from './helper/helper';
-import logger from '../../logger/logger';
+import { logger } from '../config';
 
 export const hearsPresetMR = async (ctx: MyContext) => {
   // TODO сделать обработку на ошибку если нет мр или проблема с апи

@@ -1,10 +1,10 @@
 import { ChatСonfig } from '../db';
 import { ChatMembers } from '../db/chatMembers';
+import { logger } from '../config';
 import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 
 import { MyContext } from '../type';
 import { fetchMR, getTaskNumber, messageGenerator } from './helper';
-import logger from '../../logger/logger';
 
 // TODO вынести отдельно чтоб при старте сохнять ативных пользватлей
 export const hearsActiveMR = async (ctx: MyContext) => {

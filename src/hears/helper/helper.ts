@@ -1,7 +1,7 @@
 import { ApiGitLab } from '../../api/apiGitLab';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from '../constant';
 import { MyContext } from '../../type';
-import logger from '../../../logger/logger';
+import { logger } from '../../config';
 
 export const fetchMR = async (ctx: MyContext, gitLabToken: string) => {
   const text = ctx.message!.text!;

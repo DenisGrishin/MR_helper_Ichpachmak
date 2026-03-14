@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { Bot } from 'grammy';
-import logger from '../logger/logger';
+
 import { MyContext } from './type';
 import { BotInstance } from './BotInstance';
+import { logger } from './config';
 
 const bot = new Bot<MyContext>(`${process.env.BOT_API_KEY}`);
 

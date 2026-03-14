@@ -1,12 +1,12 @@
 import pino from 'pino';
 
-export default pino({
+const logger = pino({
   transport: {
     targets: [
       {
         target: 'pino-roll',
         options: {
-          file: `${__dirname}/logs.log`,
+          file: `logs/bot.log`,
           size: '10M',
           mkdir: true,
           limit: { count: 1 },
@@ -23,3 +23,5 @@ export default pino({
     ],
   },
 });
+
+export default logger;
