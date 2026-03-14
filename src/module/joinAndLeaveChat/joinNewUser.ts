@@ -1,27 +1,45 @@
 import { InlineKeyboard } from 'grammy';
 import { MyContext } from '../../type';
+import { logger } from '../../config';
 
 export const joinNewUser = async (ctx: MyContext) => {
-  console.log('ctx ==> ', ctx);
-  const members = ctx.message?.new_chat_members;
-  if (!members?.length) return;
+  try {
+    const chatTitle = ctx.chat?.title || 'неизвестный чат';
+    logger.info(`Обработка новых участников в чате: ${chatTitle}`);
 
-  const keyboard = new InlineKeyboard();
+    const members = ctx.message?.new_chat_members;
+    if (!members?.length) {
+      logger.warn('Список новых участников пуст');
+      return;
+    }
 
-  for (const member of members) {
-    keyboard
-      .text(
-        `Добавить ${member.first_name}`,
-        `setUser${ctx.chat?.id}-${member.username}`,
-      )
-      .row();
-  }
+    const keyboard = new InlineKeyboard();
 
-  if (ctx.from?.id) {
-    await ctx.api.sendMessage(
-      ctx.from.id,
-      `Новый участник в чате "${ctx.chat?.title}". Хотите добавить его в базу данных?`,
-      { reply_markup: keyboard },
+    for (const member of members) {
+      keyboard
+        .text(
+          `Добавить ${member.first_name}`,
+          `setUser${ctx.chat?.id}-${member.username}`,
+        )
+        .row();
+      logger.info(
+        `Добавлен участник в меню: ${member.first_name} (@${member.username})`,
+      );
+    }
+
+    if (ctx.from?.id) {
+      await ctx.api.sendMessage(
+        ctx.from.id,
+        `Новый участник в чате "${ctx.chat?.title}". Хотите добавить его в базу данных?`,
+        { reply_markup: keyboard },
+      );
+      logger.info('Меню добавления пользователей отправлено успешно');
+    } else {
+      logger.warn('Не удалось определить пользователя для отправки сообщения');
+    }
+  } catch (error) {
+    logger.error(
+      `Ошибка в joinNewUser: ${error instanceof Error ? error.message : error}`,
     );
   }
 };

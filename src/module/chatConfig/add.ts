@@ -3,27 +3,35 @@ import { InlineKeyboard } from 'grammy';
 import { ChatСonfig } from '../../db';
 import { MyContext, TCallbackQueryContext } from '../../type';
 import { KeyCommand, LIST_FIELD_CHAT_CONFIG } from '../../constant/constant';
+import { logger } from '../../config';
 
 export const actionAddConfig = async (
   ctx: MyContext,
   text: string,
   chatId: string,
 ) => {
-  const keyboardAskUserConfirmation = new InlineKeyboard()
-    .text(
-      'Добавить название проекта',
-      `${KeyCommand.addConfigChat}:${chatId}:chatTitle`,
-    )
-    .row()
-    .text(
-      'Добавить токен GitLab',
-      `${KeyCommand.addConfigChat}:${chatId}:tokenGitLab`,
-    );
+  try {
+    const keyboardAskUserConfirmation = new InlineKeyboard()
+      .text(
+        'Добавить название проекта',
+        `${KeyCommand.addConfigChat}:${chatId}:chatTitle`,
+      )
+      .row()
+      .text(
+        'Добавить токен GitLab',
+        `${KeyCommand.addConfigChat}:${chatId}:tokenGitLab`,
+      );
 
-  if (ctx.from?.id) {
-    await ctx.api.sendMessage(ctx.from.id, text, {
-      reply_markup: keyboardAskUserConfirmation,
-    });
+    if (ctx.from?.id) {
+      await ctx.api.sendMessage(ctx.from.id, text, {
+        reply_markup: keyboardAskUserConfirmation,
+      });
+      logger.info('Меню конфигурации отправлено пользователю');
+    }
+  } catch (error) {
+    logger.error(
+      `Ошибка в actionAddConfig: ${error instanceof Error ? error.message : error}`,
+    );
   }
 };
 
@@ -32,27 +40,48 @@ export const addConfigChat = async (
   chatId?: number | null,
   filedUpdateBD?: keyof ChatСonfig,
 ) => {
-  const chatTitle = ctx.message?.text;
+  try {
+    const chatTitle = ctx.message?.text;
 
-  if (!chatId || !chatTitle || !filedUpdateBD) return;
+    if (!chatId || !chatTitle || !filedUpdateBD) return;
 
-  await ChatСonfig.updateFieldByChatId(chatId, filedUpdateBD, chatTitle);
+    logger.info(
+      `Сохранение конфигурации: поле ${filedUpdateBD} для чата ${chatId}`,
+    );
 
-  await ctx.reply('Данные успешно сохранены!');
+    await ChatСonfig.updateFieldByChatId(chatId, filedUpdateBD, chatTitle);
+
+    await ctx.reply('Данные успешно сохранены!');
+    logger.info(`Конфигурация успешно сохранена для чата ${chatId}`);
+  } catch (error) {
+    logger.error(
+      `Ошибка при сохранении конфигурации: ${error instanceof Error ? error.message : error}`,
+    );
+  }
 };
 
 export const handlerAddConfigChat = async (ctx: TCallbackQueryContext) => {
-  const chatId = Number(ctx.callbackQuery.data.split(':')[1]);
+  try {
+    const chatId = Number(ctx.callbackQuery.data.split(':')[1]);
 
-  const filedBD = String(
-    ctx.callbackQuery.data.split(':')[2],
-  ) as keyof ChatСonfig;
+    const filedBD = String(
+      ctx.callbackQuery.data.split(':')[2],
+    ) as keyof ChatСonfig;
 
-  (await ctx.reply(
-    `Введите ${LIST_FIELD_CHAT_CONFIG[filedBD]} для этого чата.`,
-  ),
-    (ctx.session.keyCommand = KeyCommand.addConfigChat));
+    logger.info(`Запрос на редактирование поля ${filedBD} чата ${chatId}`);
 
-  ctx.session.chatId = Number(chatId);
-  ctx.session.filedUpdateBD = filedBD;
+    (await ctx.reply(
+      `Введите ${LIST_FIELD_CHAT_CONFIG[filedBD]} для этого чата.`,
+    ),
+      (ctx.session.keyCommand = KeyCommand.addConfigChat));
+
+    ctx.session.chatId = Number(chatId);
+    ctx.session.filedUpdateBD = filedBD;
+
+    logger.info(`Ожидание ввода значения для поля ${filedBD}`);
+  } catch (error) {
+    logger.error(
+      `Ошибка в handlerAddConfigChat: ${error instanceof Error ? error.message : error}`,
+    );
+  }
 };

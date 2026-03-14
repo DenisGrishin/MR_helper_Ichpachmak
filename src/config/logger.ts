@@ -12,14 +12,14 @@ const logger = pino({
           limit: { count: 1 },
         },
       },
-      {
-        target: 'pino-pretty',
-        options: {
-          colorize: true,
-          translateTime: 'SYS:standard',
-          ignore: 'pid,hostname',
-        },
-      },
+      // {
+      //   target: 'pino-pretty',
+      //   options: {
+      //     colorize: true,
+      //     translateTime: 'SYS:standard',
+      //     ignore: 'pid,hostname',
+      //   },
+      // },
     ],
   },
 });

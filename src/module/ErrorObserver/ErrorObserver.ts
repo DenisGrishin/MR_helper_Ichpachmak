@@ -1,6 +1,6 @@
 import { BotError, GrammyError, HttpError } from 'grammy';
 import { MyContext } from '../../type';
-import logger from '../logger/logger';
+import { logger } from '../../config';
 
 export const ErrorObserve = async (err: BotError<MyContext>) => {
   const ctx = err.ctx;

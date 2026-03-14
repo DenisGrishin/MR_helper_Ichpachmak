@@ -48,6 +48,7 @@ export const getTaskNumber = (nameBranch: string) => {
   const matchTask = nameBranch.match(REGEX_BRANCH_ID);
   const taskNumber = matchTask?.[0] ?? 'UNKNOWN';
 
+  logger.info(`Получен номер задачи: ${taskNumber}`);
   return taskNumber;
 };
 
