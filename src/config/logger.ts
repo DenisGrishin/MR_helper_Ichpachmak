@@ -9,7 +9,7 @@ const logger = pino({
           file: `logs/bot.log`,
           size: '10M',
           mkdir: true,
-          limit: { count: 1 },
+          limit: { count: 3 },
         },
       },
       // {
