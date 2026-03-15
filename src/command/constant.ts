@@ -13,7 +13,6 @@ export const TEXT_COMMAND: Record<string, string> = {
 export const LIST_MY_COMMAND = [
   { command: KeyCommand.menu, description: 'Меню' },
   { command: KeyCommand.setUser, description: 'Добавить пользователя' },
-
   {
     command: KeyCommand.completedTasks,
     description: 'Посмотреть список выполененых задач',

@@ -2,6 +2,7 @@ import { ApiGitLab } from '../../api/apiGitLab';
 import { REGEX_BRANCH_ID, REGEX_MR_ID } from '../constant';
 import { MyContext } from '../../type';
 import { logger } from '../../config';
+import { recordCompletedTask } from '../../module/TaskService/recordCompletedTask';
 
 export const fetchMR = async (ctx: MyContext, gitLabToken: string) => {
   const text = ctx.message!.text!;
@@ -98,4 +99,65 @@ export const messageGenerator = ({
     `;
 
   return message;
+};
+
+const safeJsonParse = <T = any>(
+  jsonString: string | null | undefined,
+  defaultValue: T,
+): T => {
+  if (!jsonString) return defaultValue;
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    logger.warn({
+      msg: 'Ошибка парсинга JSON',
+      error: error instanceof Error ? error.message : error,
+      jsonString,
+      function: 'safeJsonParse',
+    });
+    return defaultValue;
+  }
+};
+
+export const recordTaskForAuthor = async ({
+  taskNumber,
+  id,
+  completedTasks,
+  chatInternalId,
+  chatId,
+  authorUsername,
+}: {
+  taskNumber: string;
+  id: number;
+  completedTasks: string;
+  chatInternalId: number;
+  chatId: number;
+  authorUsername: string;
+}) => {
+  if (id) {
+    logger.info({
+      msg: 'Запись выполненной задачи',
+      taskNumber,
+      chatId,
+      chatInternalId,
+      userId: id,
+      username: authorUsername,
+      function: 'recordTaskForAuthor',
+    });
+    recordCompletedTask({
+      taskNumber,
+      completedTasks: safeJsonParse<string[]>(completedTasks, []),
+      chatInternalId,
+      userInternalId: id as number,
+    });
+  } else {
+    logger.warn({
+      msg: 'Автор MR не найден в списке пользователей чата',
+      taskNumber,
+      chatId,
+      chatInternalId,
+      username: authorUsername,
+      function: 'recordTaskForAuthor',
+    });
+  }
 };

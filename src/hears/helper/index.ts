@@ -1,1 +1,6 @@
-export { fetchMR, messageGenerator, getTaskNumber } from './helper';
+export {
+  fetchMR,
+  messageGenerator,
+  getTaskNumber,
+  recordTaskForAuthor,
+} from './helper';

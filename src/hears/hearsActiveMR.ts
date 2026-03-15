@@ -1,10 +1,14 @@
 import { ChatСonfig } from '../db';
 import { ChatMembers } from '../db/chatMembers';
 import { logger } from '../config';
-import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 
 import { MyContext } from '../type';
-import { fetchMR, getTaskNumber, messageGenerator } from './helper';
+import {
+  fetchMR,
+  getTaskNumber,
+  messageGenerator,
+  recordTaskForAuthor,
+} from './helper';
 
 // TODO вынести отдельно чтоб при старте сохнять ативных пользватлей
 export const hearsActiveMR = async (ctx: MyContext) => {
@@ -75,7 +79,7 @@ export const hearsActiveMR = async (ctx: MyContext) => {
     logger.warn({
       msg: 'MR не получен',
       chatId,
-      chatInternalId: chatInternalId.id,
+      chatInternalId: chatInternalId?.id,
       function: 'hearsActiveMR',
     });
     return;
@@ -110,18 +114,17 @@ export const hearsActiveMR = async (ctx: MyContext) => {
   }
 
   if (taskNumber !== 'UNKNOWN') {
-    logger.info({
-      msg: 'Запись выполненной задачи',
+    const authorInChat = usersInCurrentChat.find(
+      (u: any) => u.name === authorMR,
+    );
+
+    await recordTaskForAuthor({
       taskNumber,
+      id: authorInChat.id,
+      completedTasks: authorInChat.completedTasks,
+      chatInternalId: chatInternalId.id,
       chatId,
-      chatInternalId: chatInternalId.id,
-      function: 'hearsActiveMR',
-    });
-    recordCompletedTask({
-      taskNumber,
-      completedTasks: JSON.parse(usersInCurrentChat?.completedTasks ?? '[]'),
-      chatInternalId: chatInternalId.id,
-      userInternalId: usersInCurrentChat?.id as number,
+      authorUsername: authorMR,
     });
   }
 

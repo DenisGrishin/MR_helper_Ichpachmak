@@ -3,7 +3,7 @@ import { ChatMembers } from '../db/chatMembers';
 import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 import { MyContext } from '../type';
 import { getTaskNumber, messageGenerator } from './helper';
-import { fetchMR } from './helper/helper';
+import { fetchMR, recordTaskForAuthor } from './helper/helper';
 import { logger } from '../config';
 
 export const hearsPresetMR = async (ctx: MyContext) => {
@@ -165,19 +165,13 @@ export const hearsPresetMR = async (ctx: MyContext) => {
   }
 
   if (taskNumber !== 'UNKNOWN') {
-    logger.info({
-      msg: 'Запись выполненной задачи',
+    await recordTaskForAuthor({
       taskNumber,
+      id: currentUser.id,
+      completedTasks: currentChatMember?.completedTasks || '',
+      chatInternalId: chatInternalId.id,
       chatId,
-      chatInternalId: chatInternalId.id,
-      userId: currentUser.id,
-      function: 'hearsPresetMR',
-    });
-    recordCompletedTask({
-      taskNumber,
-      completedTasks: JSON.parse(currentChatMember?.completedTasks ?? '[]'),
-      chatInternalId: chatInternalId.id,
-      userInternalId: currentUser.id as number,
+      authorUsername: authorMR,
     });
   }
 
