@@ -8,19 +8,25 @@ export const userKeyboardMenu = new InlineKeyboard()
   .text('Обновить пресет', KeyCommand.updatePreset)
   .text('Список всех пользователей', KeyCommand.allUser)
   .row()
+  .text('Посмотреть список выполененых задач', KeyCommand.completedTasks)
+  .row()
   .url(
     'Документация',
     'https://wiki.yandex.ru/napravlenija-kompanii/frontend/spisok-botov/mr-helper/',
   );
 
 export const adminKeyboardMenu = new InlineKeyboard()
+  .text('Добавить пользователя', KeyCommand.setUser)
   .text('Активировать пользователя', KeyCommand.editStatusSendMRUser)
+  .row()
   .text('⚠️ Удалить пользователя', KeyCommand.delete)
-  .row()
   .text('Список всех пользователей', KeyCommand.allUser)
-  .text('Обновить пресет', KeyCommand.updatePreset)
   .row()
+  .text('Обновить пресет', KeyCommand.updatePreset)
   .text('Конфигурации чатов', KeyCommand.chatСonfig)
+  .row()
+  .text('Посмотреть список выполененых задач', KeyCommand.completedTasks)
+  .row()
   .url(
     'Документация',
     'https://wiki.yandex.ru/napravlenija-kompanii/frontend/spisok-botov/mr-helper/',

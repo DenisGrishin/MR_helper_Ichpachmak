@@ -143,6 +143,38 @@ export class BotInstance {
 
     // ======
 
+    this.bot.callbackQuery(KeyCommand.setUser, async (ctx: MyContext) => {
+      if (ctx.chat?.type !== 'private') {
+        await ctx.reply(
+          'Эта команда работает только в личных сообщениях с ботом.',
+        );
+        return;
+      }
+
+      if (!isAdminUser(ctx.from?.id || 0)) {
+        await ctx.reply(
+          'Вы не можете использовать эту команду, так как не являетесь администратором бота. Пожалуйста, напишите администратору.',
+        );
+        return;
+      }
+
+      commandShowListChat({
+        ctx,
+        modKeybord: 'editText',
+        text: 'Выберите чат проекта для добавления пользователя.',
+        action: 'setUser',
+      });
+    });
+
+    this.bot.callbackQuery(KeyCommand.completedTasks, async (ctx: MyContext) =>
+      commandShowListChat({
+        ctx,
+        text: 'Выберите чат проекта, в который посмотреть выполненные задачи.',
+        action: 'completedTasks',
+        modKeybord: 'editText',
+      }),
+    );
+
     this.bot.callbackQuery(/^add_config_chat:-?\d+/, handlerAddConfigChat);
 
     this.bot.callbackQuery(/^updatePreset:\d/, handlerUpatePreset);
@@ -233,38 +265,6 @@ export class BotInstance {
     //============================================================
     // команды через /
     //============================================================
-
-    this.bot.command([KeyCommand.setUser], async (ctx: MyContext) => {
-      if (ctx.chat?.type !== 'private') {
-        await ctx.reply(
-          'Эта команда работает только в личных сообщениях с ботом.',
-        );
-        return;
-      }
-
-      if (!isAdminUser(ctx.from?.id || 0)) {
-        await ctx.reply(
-          'Вы не можете использовать эту команду, так как не являетесь администратором бота. Пожалуйста, напишите администратору.',
-        );
-        return;
-      }
-
-      commandShowListChat({
-        ctx,
-        modKeybord: 'reply',
-        text: 'Выберите чат проекта для добавления пользователя.',
-        action: 'setUser',
-      });
-    });
-
-    this.bot.command([KeyCommand.completedTasks], async (ctx: MyContext) =>
-      commandShowListChat({
-        ctx,
-        text: 'Выберите чат проекта, в который посмотреть выполненные задачи.',
-        action: 'completedTasks',
-        modKeybord: 'reply',
-      }),
-    );
 
     this.bot.command([KeyCommand.menu], async (ctx: MyContext) => {
       if (ctx.chat?.type !== 'private') {
