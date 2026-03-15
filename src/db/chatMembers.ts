@@ -240,4 +240,148 @@ export class ChatMembers {
       });
     });
   }
+
+  /**
+   * Ищет участников чата по массиву userInternalId и возвращает данные из таблицы chatMembers
+   * @param userIds - массив внутренних ID пользователей (userInternalId из таблицы users)
+   * @param chatInternalId - внутренний id чата (chatConfig.id)
+   * @param memberFields - список полей из таблицы chatMembers, которые нужно вернуть (опционально)
+   * @returns Promise с массивом объектов IChatMember
+   *
+   * Функция ищет пользователей по их внутренним ID в таблице chatMembers.
+   *
+   * Пример использования:
+   * ```ts
+   * const members = await ChatMembers.findChatMembersByIds([10, 15, 20], 5);
+   * // Вернёт массив: [{ id: 1, userInternalId: 10, chatInternalId: 5, isAdmin: 1, ... }, ...]
+   * ```
+   */
+  static findChatMembersByIds(
+    userIds: number[],
+    chatInternalId: number,
+    memberFields: (keyof IChatMember)[] = [
+      'id',
+      'userInternalId',
+      'chatInternalId',
+      'isActive',
+      'isAdmin',
+    ],
+  ): Promise<Partial<IChatMember>[]> {
+    return new Promise((resolve, reject) => {
+      if (!userIds || userIds.length === 0) {
+        return reject(new Error('Массив ID пользователей пуст'));
+      }
+
+      const placeholders = userIds.map(() => '?').join(',');
+      const selectClause = memberFields.length
+        ? memberFields.map((f) => String(f)).join(', ')
+        : '*';
+
+      const sql = `
+      SELECT ${selectClause}
+      FROM chatMembers
+      WHERE userInternalId IN (${placeholders})
+      AND chatInternalId = ?
+    `;
+
+      db.all(sql, [...userIds, chatInternalId], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows as Partial<IChatMember>[]);
+      });
+    });
+  }
+
+  /**
+   * Массово обновляет одно поле для списка пользователей в чате
+   * @param userIds - массив внутренних ID пользователей (userInternalId)
+   * @param chatInternalId - внутренний id чата (chatConfig.id)
+   * @param field - поле для обновления (например, 'isAdmin')
+   * @param value - новое значение поля
+   * @returns Promise<{ updated: number }> - количество обновлённых записей
+   *
+   * Пример использования:
+   * ```typescript
+   * const result = await ChatMembers.updateFieldByIds(
+   *   [10, 15, 20],      // ID пользователей
+   *   5,                   // ID чата
+   *   'isAdmin',            // поле
+   *   1                    // новое значение (1 = админ)
+   * );
+   * console.log(`Обновлено: ${result.updated} записей`);
+   * ```
+   */
+  static updateFieldByIds(
+    userIds: number[],
+    chatInternalId: number,
+    field: ChatMemberField,
+    value: any,
+  ): Promise<{ updated: number }> {
+    return new Promise((resolve, reject) => {
+      if (!userIds || userIds.length === 0) {
+        return reject(new Error('Массив ID пользователей пуст'));
+      }
+
+      if (!ALLOWED_FIELDS.includes(field)) {
+        return reject(new Error(`Недопустимое поле: ${field}`));
+      }
+
+      const placeholders = userIds.map(() => '?').join(',');
+      const sql = `
+      UPDATE chatMembers
+      SET ${field} = ?
+      WHERE userInternalId IN (${placeholders})
+      AND chatInternalId = ?
+    `;
+
+      db.run(sql, [value, ...userIds, chatInternalId], function (err) {
+        if (err) return reject(err);
+        resolve({ updated: this.changes });
+      });
+    });
+  }
+
+  /**
+   * Создает новых участников чата (массовое создание)
+   * @param userInternalIds - массив внутренних ID пользователей (из таблицы users)
+   * @param chatInternalId - внутренний ID чата (из таблицы chatConfig)
+   * @param isAdmin - являются ли пользователи админами (по умолчанию 0)
+   * @returns Promise<{ created: number }> - количество созданных записей
+   */
+  static async createChatMembers(
+    userInternalIds: number[],
+    chatInternalId: number,
+    isAdmin: 0 | 1 = 0,
+  ): Promise<{ created: number }> {
+    return new Promise((resolve, reject) => {
+      if (!userInternalIds || userInternalIds.length === 0) {
+        return reject(new Error('Массив ID пользователей пуст'));
+      }
+
+      const placeholders = userInternalIds
+        .map(() => "(?, ?, 0, '[]', '[]', '[]', ?)")
+        .join(', ');
+      const values = userInternalIds.flatMap((userId) => [
+        userId,
+        chatInternalId,
+        isAdmin,
+      ]);
+
+      const sql = `
+      INSERT INTO chatMembers (
+        userInternalId,
+        chatInternalId,
+        isActive,
+        preset,
+        completedTasks,
+        verificationTasks,
+        isAdmin
+      ) VALUES ${placeholders}
+    `;
+
+      db.run(sql, values, function (err) {
+        if (err) return reject(err);
+        resolve({ created: this.changes });
+      });
+    });
+  }
 }

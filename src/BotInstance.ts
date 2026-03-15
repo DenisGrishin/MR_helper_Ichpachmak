@@ -24,6 +24,7 @@ import { handlerSelectChat } from './module/chatList/handlerSelectChat';
 import { handleCommand } from './command/handleCommand';
 import { handlerUpatePreset } from './module/userManagement/editPreset';
 import { handlerEditStatusSendMrUser } from './module/userManagement/EditStatusSendMr';
+import { makeUsersAdmin } from './module/userManagement/makeUsersAdmin';
 
 function initialState(): SessionData {
   return {
@@ -144,14 +145,7 @@ export class BotInstance {
     // ======
 
     this.bot.callbackQuery(KeyCommand.setUser, async (ctx: MyContext) => {
-      if (ctx.chat?.type !== 'private') {
-        await ctx.reply(
-          'Эта команда работает только в личных сообщениях с ботом.',
-        );
-        return;
-      }
-
-      if (!isAdminUser(ctx.from?.id || 0)) {
+      if (ctx.from?.username && !isAdminUser(ctx.from?.username)) {
         await ctx.reply(
           'Вы не можете использовать эту команду, так как не являетесь администратором бота. Пожалуйста, напишите администратору.',
         );
@@ -250,9 +244,9 @@ export class BotInstance {
     this.bot.callbackQuery(/^setUser:@*/, handleSetUserToChat);
 
     this.bot.callbackQuery(KeyCommand.backToMenu, async (ctx) => {
-      const keybord = isAdminUser(ctx.from?.id || 0)
-        ? adminKeyboardMenu
-        : userKeyboardMenu;
+      const isAdmin = await isAdminUser(ctx.from?.username || '');
+
+      const keybord = isAdmin ? adminKeyboardMenu : userKeyboardMenu;
 
       ctx.callbackQuery.message?.editText('Выбирете пункт меню', {
         reply_markup: keybord,
@@ -271,10 +265,9 @@ export class BotInstance {
         ctx.reply('Эта команда работает только в личных сообщениях с ботом.');
         return;
       }
+      const isAdmin = await isAdminUser(ctx.from?.username || '');
 
-      const keybord = isAdminUser(ctx.from?.id || 0)
-        ? adminKeyboardMenu
-        : userKeyboardMenu;
+      const keybord = isAdmin ? adminKeyboardMenu : userKeyboardMenu;
 
       await ctx.reply('Выбирете пункт', { reply_markup: keybord });
     });
@@ -282,6 +275,8 @@ export class BotInstance {
     this.bot.command([KeyCommand.createTasksListTEST], async (ctx: MyContext) =>
       handleCommand(ctx, KeyCommand.createTasksListTEST),
     );
+
+    this.bot.command([KeyCommand.setAdmins], makeUsersAdmin);
 
     this.bot.command(
       [KeyCommand.createTasksListSTAGE],

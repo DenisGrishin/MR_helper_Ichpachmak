@@ -2,7 +2,7 @@ import db from './db';
 
 export interface IChat {
   id: number;
-  chatId: string;
+  chatId: number;
   chatTitle: string;
   gitBaseUrl: string | null;
   tokenGitLab: string | null;

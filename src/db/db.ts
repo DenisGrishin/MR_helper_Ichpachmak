@@ -50,12 +50,9 @@ db.serialize(() => {
   `);
 });
 
+db.run(`
+  INSERT OR IGNORE INTO chatConfig (chatId, chatTitle, gitBaseUrl, tokenGitLab)
+  VALUES (-1, 'system_private_chat', NULL, NULL)
+`);
+
 export default db;
-
-// test 1
-// glpat-OfUHDUy-aRE9WSQClzbk6m86MQp1OjhmamsyCw.01.120n0o66h
-// test 2
-// glpat-hxZ7jHXUyo2zjuN_sYiHi286MQp1OmhtdnlmCw.01.120y7cj8y
-
-// BOT_API_KEY=7758173769:AAEfm-lm4uOLAeOnYDQCbIyn0FtFrTdv7VM
-// BASE_URL=gitlab.com

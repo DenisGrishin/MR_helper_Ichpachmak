@@ -1,6 +1,9 @@
 import { KeyCommand } from '../constant/constant';
 
 export const TEXT_COMMAND: Record<string, string> = {
+  [`${KeyCommand.setUser}`]:
+    'Укажите теги идентификаторы пользователей, которых необходимо добавить в систему.',
+
   // [`${KeyCommand.createTasksListTEST}`]:
   //   'Отправьте список веток, чтоб сформировать список задач для площадки TEST',
   // [`${KeyCommand.createTasksListSTAGE}`]:
@@ -9,6 +12,10 @@ export const TEXT_COMMAND: Record<string, string> = {
 
 export const LIST_MY_COMMAND = [
   { command: KeyCommand.menu, description: 'Меню' },
+  {
+    command: KeyCommand.setAdmins,
+    description: 'Назначить администраторов в боте',
+  },
   // {
   //   command: KeyCommand.createTasksListTEST,
   //   description: 'Создать список задач TEST',

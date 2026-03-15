@@ -57,12 +57,15 @@ export const chunkInlineKeyboardChats = ({
   const keyboardButtonRows: any[] = [];
 
   for (let i = 0; i < list.length; i += 2) {
-    const sliceChat = list.slice(i, i + 2).map((chat) => {
-      return InlineKeyboard.text(
-        chat.chatTitle,
-        `${textQuery}:${chat.id}:${chat.chatId}:${chat.chatTitle}:${action}`,
-      );
-    });
+    const sliceChat = list
+      .filter((chat) => chat.chatId !== -1)
+      .slice(i, i + 2)
+      .map((chat) => {
+        return InlineKeyboard.text(
+          chat.chatTitle,
+          `${textQuery}:${chat.id}:${chat.chatId}:${chat.chatTitle}:${action}`,
+        );
+      });
 
     keyboardButtonRows.push(sliceChat);
   }

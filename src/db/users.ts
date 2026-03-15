@@ -125,4 +125,31 @@ export class Users {
       });
     });
   }
+
+  /**
+   * Находит пользователей по массиву имён
+   * @param names - массив имён для поиска
+   * @returns Promise<IUser[]> - массив найденных пользователей
+   *
+   * Использует SQL оператор IN для поиска по нескольким именам
+   * Регистронезависимый поиск (LOWER)
+   *
+   * Пример:
+   * - findUsersByNames(['@ivan', '@petr']) найдёт пользователей с этими именами
+   */
+  static findUsersByNames(names: string[]): Promise<IUser[]> {
+    return new Promise((resolve, reject) => {
+      if (!names || names.length === 0) {
+        return reject(new Error('Массив имён пуст'));
+      }
+
+      const placeholders = names.map(() => '?').join(',');
+      const sql = `SELECT * FROM users WHERE name IN (${placeholders})`;
+
+      db.all(sql, names, (err, rows: IUser[]) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+  }
 }

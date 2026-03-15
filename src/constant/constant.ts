@@ -18,13 +18,8 @@ export enum KeyCommand {
   createTasksListTEST = 'qwe',
   createTasksListSTAGE = 'qwes',
   addConfigChat = 'add_config_chat',
+  setAdmins = 'set_admins',
 }
-
-export const LIST_ID_USER_ADMIN = [
-  473675861, 8118180262, 856816417, 708634774, 1385322065,
-];
-
-export const ID_BOT = 473675861;
 
 export const LIST_FIELD_CHAT_CONFIG: Record<keyof ChatСonfig, string> = {
   chatTitle: 'Название чата',
