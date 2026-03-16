@@ -1,11 +1,16 @@
 import { logger } from '../config';
-import { Users } from '../db';
+import { ChatСonfig, Users } from '../db';
 import { ChatMembers } from '../db/chatMembers';
 
 export const isAdminUser = async (name: string) => {
   const author = await Users.findUser(`@${name}`, 'name', () => {});
+  const chat = await ChatСonfig.findByTelegramId(-1);
 
-  const authorChatMember = await ChatMembers.findChatMember(author.id, -1);
+  const authorChatMember = await ChatMembers.findChatMember(
+    author.id,
+    chat.id,
+    ['isAdmin'],
+  );
 
   logger.info({
     msg: 'Проверка прав администратора',

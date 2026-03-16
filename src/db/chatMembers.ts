@@ -384,4 +384,53 @@ export class ChatMembers {
       });
     });
   }
+
+  /**
+   * Убеждается, что пользователи существуют в чате (создаёт отсутствующие записи)
+   * @param userInternalIds - массив внутренних ID пользователей (из таблицы users)
+   * @param chatInternalId - внутренний ID чата (из таблицы chatConfig)
+   * @param isAdmin - являются ли пользователи админами (по умолчанию 0)
+   * @returns Promise<{ created: number }> - количество созданных записей
+   *
+   * Эта функция использует INSERT OR IGNORE, чтобы не вызывать ошибку,
+   * если запись уже существует. Полезно для обеспечения наличия записей
+   * перед обновлением.
+   */
+  static ensureChatMembersExist(
+    userInternalIds: number[],
+    chatInternalId: number,
+    isAdmin: 0 | 1 = 0,
+  ): Promise<{ created: number }> {
+    return new Promise((resolve, reject) => {
+      if (!userInternalIds || userInternalIds.length === 0) {
+        return reject(new Error('Массив ID пользователей пуст'));
+      }
+
+      const placeholders = userInternalIds
+        .map(() => "(?, ?, 0, '[]', '[]', '[]', ?)")
+        .join(', ');
+      const values = userInternalIds.flatMap((userId) => [
+        userId,
+        chatInternalId,
+        isAdmin,
+      ]);
+
+      const sql = `
+      INSERT OR IGNORE INTO chatMembers (
+        userInternalId,
+        chatInternalId,
+        isActive,
+        preset,
+        completedTasks,
+        verificationTasks,
+        isAdmin
+      ) VALUES ${placeholders}
+    `;
+
+      db.run(sql, values, function (err) {
+        if (err) return reject(err);
+        resolve({ created: this.changes });
+      });
+    });
+  }
 }

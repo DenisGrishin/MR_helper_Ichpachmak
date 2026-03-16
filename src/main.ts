@@ -16,7 +16,12 @@ new BotInstance(bot);
 async function startBot(bot: Bot<MyContext>): Promise<void> {
   try {
     bot.start({
-      allowed_updates: ['chat_member'],
+      allowed_updates: [
+        'message',
+        'callback_query',
+        'my_chat_member',
+        'chat_member',
+      ],
       onStart: () => {
         logger.info({
           msg: 'Bot started',

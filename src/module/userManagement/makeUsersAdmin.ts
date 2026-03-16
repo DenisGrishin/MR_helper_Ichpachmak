@@ -85,6 +85,8 @@ export const makeUsersAdmin = async (ctx: MyContext) => {
 
     const systemChat = await ChatСonfig.findByTelegramId(-1);
 
+    await ChatMembers.ensureChatMembersExist(userIds, chatConfig.id, 0);
+
     const result = await ChatMembers.updateFieldByIds(
       userIds,
       chatConfig.id,
@@ -92,7 +94,7 @@ export const makeUsersAdmin = async (ctx: MyContext) => {
       1,
     );
 
-    await ChatMembers.createChatMembers(userIds, systemChat.id, 1);
+    await ChatMembers.ensureChatMembersExist(userIds, systemChat.id, 1);
 
     logger.info({
       msg: 'Обновление статуса администраторов завершено',
@@ -149,6 +151,17 @@ export const handleChatMemberStatus = async (ctx: Context) => {
 
   const systemPrivateChat = await ChatСonfig.findByTelegramId(-1);
 
+  if (!ctx.chat?.id) {
+    logger.error({
+      msg: 'chat_member событие без chatId',
+      username: user.username,
+      function: 'handleChatMemberStatus',
+    });
+    return;
+  }
+
+  const currentChat = await ChatСonfig.findByTelegramId(ctx.chat?.id);
+
   if (!memberUser) {
     logger.error({
       msg: 'Пользователь не найден в БД',
@@ -170,9 +183,16 @@ export const handleChatMemberStatus = async (ctx: Context) => {
       function: 'handleChatMemberStatus',
     });
 
-    await ChatMembers.createChatMembers(
+    await ChatMembers.ensureChatMembersExist(
       [memberUser.id],
       systemPrivateChat.id,
+      1,
+    );
+
+    await ChatMembers.updateFieldByIds(
+      [memberUser.id],
+      currentChat.id,
+      'isAdmin',
       1,
     );
   }
@@ -186,5 +206,11 @@ export const handleChatMemberStatus = async (ctx: Context) => {
     });
 
     await ChatMembers.deleteChatMember(memberUser.id, systemPrivateChat.id);
+    await ChatMembers.updateFieldByIds(
+      [memberUser.id],
+      currentChat.id,
+      'isAdmin',
+      0,
+    );
   }
 };
