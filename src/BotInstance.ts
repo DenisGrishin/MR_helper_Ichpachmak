@@ -24,7 +24,10 @@ import { handlerSelectChat } from './module/chatList/handlerSelectChat';
 import { handleCommand } from './command/handleCommand';
 import { handlerUpatePreset } from './module/userManagement/editPreset';
 import { handlerEditStatusSendMrUser } from './module/userManagement/EditStatusSendMr';
-import { makeUsersAdmin } from './module/userManagement/makeUsersAdmin';
+import {
+  handleChatMemberStatus,
+  makeUsersAdmin,
+} from './module/userManagement/makeUsersAdmin';
 
 function initialState(): SessionData {
   return {
@@ -68,6 +71,8 @@ export class BotInstance {
     this.bot.on('message:left_chat_member', leaveUserToChat);
 
     this.bot.on('my_chat_member', leaveBot);
+
+    this.bot.on('chat_member', handleChatMemberStatus);
   }
 
   initHears() {
@@ -266,6 +271,7 @@ export class BotInstance {
         return;
       }
       const isAdmin = await isAdminUser(ctx.from?.username || '');
+      console.log('isAdmin ==> ', isAdmin);
 
       const keybord = isAdmin ? adminKeyboardMenu : userKeyboardMenu;
 

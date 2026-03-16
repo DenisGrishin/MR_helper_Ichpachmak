@@ -16,3 +16,21 @@ export const isAdminUser = async (name: string) => {
 
   return authorChatMember?.isAdmin === 1;
 };
+
+/**
+ * Проверяет, является ли статус пользователя участником чата
+ * @param {string} status - Статус пользователя в чате
+ * @returns {boolean}
+ */
+export function isMemberStatus(status: string): boolean {
+  return ['member', 'administrator', 'creator'].includes(status);
+}
+
+/**
+ * Проверяет, является ли статус пользователя администраторским
+ * @param {string} status - Статус пользователя в чате
+ * @returns {boolean}
+ */
+export function isAdminStatus(status: string): boolean {
+  return ['creator', 'administrator'].includes(status);
+}
