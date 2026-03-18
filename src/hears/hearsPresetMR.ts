@@ -2,8 +2,13 @@ import { ChatСonfig, Users } from '../db';
 import { ChatMembers } from '../db/chatMembers';
 import { recordCompletedTask } from '../module/TaskService/recordCompletedTask';
 import { MyContext } from '../type';
-import { getTaskNumber, messageGenerator } from './helper';
-import { fetchMR, recordTaskForAuthor } from './helper/helper';
+import {
+  getTaskNumber,
+  messageGenerator,
+  fetchMR,
+  recordTaskForAuthor,
+  validateGitLabConfig,
+} from './helper';
 import { logger } from '../config';
 
 export const hearsPresetMR = async (ctx: MyContext) => {
@@ -92,37 +97,23 @@ export const hearsPresetMR = async (ctx: MyContext) => {
     .filter((el: string) => el !== undefined && el !== authorMR)
     .join(' ');
 
-  if (!chatInternalId.tokenGitLab) {
-    logger.warn({
-      msg: 'Токен GitLab не настроен для чата',
-      chatId,
-      chatInternalId: chatInternalId.id,
-      userId: ctx.from?.id,
-      username: ctx.from?.username,
-      function: 'hearsPresetMR',
-    });
-    try {
-      await ctx.reply(
-        '⚠️ Токен GitLab не настроен для этого чата.\n\n' +
-          'Чтобы добавить токен:\n' +
-          '1. Откройте личные сообщения с ботом\n' +
-          '2. Используйте команду /menu\n' +
-          '3. Выберите "Настройки чата проекта"\n' +
-          '4. Нажмите "Изменить токен GitLab"\n' +
-          '5. Введите ваш Personal Access Token от GitLab',
-      );
-    } catch (err) {
-      logger.error({
-        msg: 'Не удалось отправить сообщение об отсутствии токена',
-        chatId,
-        error: err instanceof Error ? err.message : err,
-        function: 'hearsPresetMR',
-      });
-    }
+  const isValidConfig = await validateGitLabConfig(
+    ctx,
+    chatId,
+    chatInternalId.tokenGitLab,
+    chatInternalId.gitBaseUrl,
+    'hearsPresetMR',
+  );
+
+  if (!isValidConfig) {
     return;
   }
 
-  const MR = await fetchMR(ctx, chatInternalId.tokenGitLab);
+  const MR = await fetchMR(
+    ctx,
+    chatInternalId.tokenGitLab!,
+    chatInternalId.gitBaseUrl!,
+  );
 
   if (!MR) {
     logger.warn({

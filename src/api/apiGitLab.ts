@@ -3,14 +3,17 @@ import axios from 'axios';
 import { logger } from '../config';
 
 export class ApiGitLab {
-  static async getMR(iid: string, projectPath: string, gitLabToken: string) {
+  static async getMR(
+    iid: string,
+    projectPath: string,
+    gitLabToken: string,
+    gitBaseUrl: string,
+  ) {
     try {
       logger.info(`Запрос MR #${iid} от GitLab`);
 
       const response = await axios.get(
-        `https://${process.env.BASE_URL}/api/v4/projects/${
-          projectPath
-        }/merge_requests/${iid}`,
+        `${gitBaseUrl}/api/v4/projects/${projectPath}/merge_requests/${iid}`,
         {
           headers: {
             // ! Не забывать про токен чтоб не просрочился

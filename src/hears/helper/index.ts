@@ -3,4 +3,5 @@ export {
   messageGenerator,
   getTaskNumber,
   recordTaskForAuthor,
+  validateGitLabConfig,
 } from './helper';

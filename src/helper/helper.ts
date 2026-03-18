@@ -2,7 +2,7 @@ import { logger } from '../config';
 import { ChatСonfig, Users } from '../db';
 import { ChatMembers } from '../db/chatMembers';
 
-export const isAdminUser = async (name: string) => {
+export const isAdminMember = async (name: string) => {
   const author = await Users.findUser(`@${name}`, 'name', () => {});
   const chat = await ChatСonfig.findByTelegramId(-1);
 

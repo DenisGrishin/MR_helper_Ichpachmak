@@ -20,6 +20,11 @@ export const actionAddConfig = async (
       .text(
         'Добавить токен GitLab',
         `${KeyCommand.addConfigChat}:${chatId}:tokenGitLab`,
+      )
+      .row()
+      .text(
+        'Добавить baseUrl для GitLab',
+        `${KeyCommand.addConfigChat}:${chatId}:gitBaseUrl`,
       );
 
     if (ctx.from?.id) {
@@ -72,6 +77,9 @@ export const handlerAddConfigChat = async (ctx: TCallbackQueryContext) => {
 
     (await ctx.reply(
       `Введите ${LIST_FIELD_CHAT_CONFIG[filedBD]} для этого чата.`,
+      {
+        disable_web_page_preview: true,
+      } as any,
     ),
       (ctx.session.keyCommand = KeyCommand.addConfigChat));
 

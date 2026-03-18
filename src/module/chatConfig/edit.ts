@@ -20,6 +20,11 @@ export const actionEditConfig = async (
         `${KeyCommand.addConfigChat}:${chatId}:tokenGitLab`,
       )
       .row()
+      .text(
+        'Добавить baseUrl для GitLab',
+        `${KeyCommand.addConfigChat}:${chatId}:gitBaseUrl`,
+      )
+      .row()
       .text('< Назад', `${KeyCommand.backToMenu}`);
 
     if (ctx.from?.id) {

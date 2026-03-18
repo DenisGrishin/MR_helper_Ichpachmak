@@ -4,7 +4,11 @@ import { MyContext } from '../../type';
 import { logger } from '../../config';
 import { recordCompletedTask } from '../../module/TaskService/recordCompletedTask';
 
-export const fetchMR = async (ctx: MyContext, gitLabToken: string) => {
+export const fetchMR = async (
+  ctx: MyContext,
+  gitLabToken: string,
+  gitBaseUrl: string,
+) => {
   const text = ctx.message!.text!;
   const projectPath = encodeGitlabProjectPath(text);
   const idMR = text.match(REGEX_MR_ID)![1];
@@ -29,7 +33,12 @@ export const fetchMR = async (ctx: MyContext, gitLabToken: string) => {
       chatId: ctx.chat?.id,
     });
 
-    const MR = await ApiGitLab.getMR(idMR, projectPath, gitLabToken);
+    const MR = await ApiGitLab.getMR(
+      idMR,
+      projectPath,
+      gitLabToken,
+      gitBaseUrl,
+    );
     return MR;
   } catch (error) {
     logger.error({
@@ -99,6 +108,74 @@ export const messageGenerator = ({
     `;
 
   return message;
+};
+
+export const validateGitLabConfig = async (
+  ctx: MyContext,
+  chatId: number,
+  tokenGitLab: string | null | undefined,
+  gitBaseUrl: string | null | undefined,
+  functionName: string,
+): Promise<boolean> => {
+  if (!tokenGitLab) {
+    logger.warn({
+      msg: 'Токен GitLab не настроен для чата',
+      chatId,
+      userId: ctx.from?.id,
+      username: ctx.from?.username,
+      function: functionName,
+    });
+    try {
+      await ctx.reply(
+        '⚠️ Токен GitLab не настроен для этого чата.\n\n' +
+          'Чтобы добавить токен:\n' +
+          '1. Откройте личные сообщения с ботом\n' +
+          '2. Используйте команду /menu\n' +
+          '3. Выберите "Настройки чата проекта"\n' +
+          '4. Нажмите "Изменить токен GitLab"\n' +
+          '5. Введите ваш Personal Access Token от GitLab',
+      );
+    } catch (err) {
+      logger.error({
+        msg: 'Не удалось отправить сообщение об отсутствии токена',
+        chatId,
+        error: err instanceof Error ? err.message : err,
+        function: functionName,
+      });
+    }
+    return false;
+  }
+
+  if (!gitBaseUrl) {
+    logger.warn({
+      msg: 'BaseUrl GitLab не настроен для чата',
+      chatId,
+      userId: ctx.from?.id,
+      username: ctx.from?.username,
+      function: functionName,
+    });
+    try {
+      await ctx.reply(
+        '⚠️ BaseUrl GitLab не настроен для этого чата.\n\n' +
+          'Чтобы добавить baseUrl:\n' +
+          '1. Откройте личные сообщения с ботом\n' +
+          '2. Используйте команду /menu\n' +
+          '3. Выберите "Настройки чата проекта"\n' +
+          '4. Нажмите "Добавить baseUrl для GitLab"\n' +
+          '5. Введите URL вашего GitLab сервера (например: https://gitlab.com)',
+      );
+    } catch (err) {
+      logger.error({
+        msg: 'Не удалось отправить сообщение об отсутствии baseUrl',
+        chatId,
+        error: err instanceof Error ? err.message : err,
+        function: functionName,
+      });
+    }
+    return false;
+  }
+
+  return true;
 };
 
 const safeJsonParse = <T = any>(

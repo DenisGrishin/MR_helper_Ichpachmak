@@ -22,6 +22,7 @@ export enum KeyCommand {
 }
 
 export const LIST_FIELD_CHAT_CONFIG: Record<keyof ChatСonfig, string> = {
-  chatTitle: 'Название чата',
-  tokenGitLab: 'Токен GitLab',
+  chatTitle: 'название чата',
+  tokenGitLab: 'токен GitLab',
+  gitBaseUrl: 'отправте baseUrl для GitLab пример: https://gitlab.com',
 };

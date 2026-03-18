@@ -10,7 +10,7 @@ import { ChatСonfig } from './db';
 
 import { addConfigChat, handlerAddConfigChat } from './module/chatConfig/add';
 import { KeyCommand } from './constant/constant';
-import { isAdminUser } from './helper/helper';
+import { isAdminMember } from './helper/helper';
 import { joinBot, leaveBot } from './module/joinAndLeaveChat/joinAndLeaveBot';
 import { handlerDeleteUser, deleteUser } from './module/userManagement/delete';
 import { commandShowListChat } from './module/chatList/createChatList';
@@ -150,7 +150,7 @@ export class BotInstance {
     // ======
 
     this.bot.callbackQuery(KeyCommand.setUser, async (ctx: MyContext) => {
-      if (ctx.from?.username && !isAdminUser(ctx.from?.username)) {
+      if (ctx.from?.username && !isAdminMember(ctx.from?.username)) {
         await ctx.reply(
           'Вы не можете использовать эту команду, так как не являетесь администратором бота. Пожалуйста, напишите администратору.',
         );
@@ -249,7 +249,7 @@ export class BotInstance {
     this.bot.callbackQuery(/^setUser:@*/, handleSetUserToChat);
 
     this.bot.callbackQuery(KeyCommand.backToMenu, async (ctx) => {
-      const isAdmin = await isAdminUser(ctx.from?.username || '');
+      const isAdmin = await isAdminMember(ctx.from?.username || '');
 
       const keybord = isAdmin ? adminKeyboardMenu : userKeyboardMenu;
 
@@ -270,8 +270,7 @@ export class BotInstance {
         ctx.reply('Эта команда работает только в личных сообщениях с ботом.');
         return;
       }
-      const isAdmin = await isAdminUser(ctx.from?.username || '');
-      console.log('isAdmin ==> ', isAdmin);
+      const isAdmin = await isAdminMember(ctx.from?.username || '');
 
       const keybord = isAdmin ? adminKeyboardMenu : userKeyboardMenu;
 
